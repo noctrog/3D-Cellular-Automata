@@ -1,0 +1,4 @@
+-I/home/ramon/Documents/Programming/3DCellularAutomata/include
+-D_LINUX
+-std=c++14
+-Wl,-rpath,/home/ramon/Documents/Programming/3DCellularAutomata/lib

@@ -1,0 +1,4 @@
+build/*
+!build/DO_NOT_DELETE
+bin/*
+!bin/DO_NOT_DELETE
