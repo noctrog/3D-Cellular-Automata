@@ -27,7 +27,7 @@ add_library(App
 
 set(RUN_DIR ${CMAKE_SOURCE_DIR}/bin)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CSS_FLAGS} -D_LINUX -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_LINUX -std=c++14")
 
 add_executable(3D_Cellular_Automata src/3D_Cellular_Automata.cpp)
 target_link_libraries(3D_Cellular_Automata ${COMMON_LIBS})

@@ -1,11 +1,25 @@
 #pragma once
 
+#include <memory>
+
 #include <GL/gl3w.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
 #include <glm/glm.hpp>
 #include <Shader.h>
+
+namespace sdl2
+{
+    struct SDL_Deleter
+    {
+	void operator()(SDL_Window* ptr) { if (ptr) SDL_DestroyWindow(ptr); }
+	void operator()(SDL_GLContext* ptr) { if (ptr) SDL_GL_DeleteContext(ptr); }
+    };
+
+    using WindowPtr = std::unique_ptr<SDL_Window, SDL_Deleter>;
+    using GLContextPtr = std::unique_ptr<SDL_GLContext, SDL_Deleter>;
+}
 
 class App
 {
@@ -37,15 +51,17 @@ private:
 
     void UpdateTime();
 
-    SDL_Window* window;
-    SDL_GLContext glcontext;
+    sdl2::WindowPtr	window;
+    sdl2::GLContextPtr	glcontext;
+    //SDL_Window* window;
+    //SDL_GLContext glcontext;
 
     /// Saves the current value of time, in seconds
     float currentTime;
 
     /* --- OpenGL objects --- */
     Shader*         program;
-    GLuint          VAO;
+    GLuint          VAO[2];
     GLuint	    VBO, EBO;
 
     GLint           mv_location;
@@ -54,6 +70,5 @@ private:
     GLuint	    map3D;
     GLuint	    map3D_aux;
 
-    float           aspect;
     glm::mat4	    proj_matrix;
    };

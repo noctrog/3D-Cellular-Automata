@@ -27,7 +27,7 @@ std::string readShaderFromFile(const char* filename)
 
 App::App()
 {
-
+    proj_matrix = glm::perspective(70.0f, 1920.0f / 1080.0f, 0.1f, 100.0f);
 }
 
 App::~App()
@@ -46,12 +46,14 @@ void  App::SDLinit()
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
  
-    window = SDL_CreateWindow("App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_OPENGL);
+    window.reset(SDL_CreateWindow("App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_OPENGL));
     if (window == nullptr){
 	throw std::runtime_error(SDL_GetError());
     }
 
-    glcontext = SDL_GL_CreateContext(window);
+    std::cout << "Se ha pasado de glcontext" << std::endl;
+    //glcontext = std::make_unique<SDL_GLContext, sdl2::SDL_Delete>(SDL_GL_CreateContext(window.get()));
+    glcontext = sdl2::GLContextPtr(new SDL_GLContext(SDL_GL_CreateContext(window.get())));
 
     SDL_GL_SetSwapInterval(20);
 }
@@ -106,7 +108,7 @@ void  App::run()
 	currentTime = static_cast<float>(SDL_GetTicks())/1000.0f;
 
 	render();
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow(window.get());
 
 	SDL_Delay(10);
     }
@@ -126,8 +128,6 @@ void  App::terminate()
     
 
     // Quit SDL
-    SDL_DestroyWindow(window);
-    SDL_GL_DeleteContext(glcontext);
     SDL_Quit();
 }
 
