@@ -32,6 +32,12 @@ struct world_unit
     uint8_t cells;
 };
 
+// To store the next number of alive cells
+struct uint_ssbo
+{
+    uint32_t cell_count;
+};
+
 class App
 {
 public:
@@ -70,29 +76,34 @@ private:
     float currentTime;
 
     /* ---   User input   --- */
-    bool	    bRunSingleEpoch;
-    bool	    bAutoEpoch;
-    float	    autoEpochRate;
+    bool	    b_run_single_epoch;
+    bool	    b_auto_epoch;
+    float	    auto_epoch_rate;
 
     /* ---  File objects  --- */
     //std::fstream mapFile;
     void	  parseFile(std::ifstream& file);
 
     /* ---	World	  --- */
-    size_t	    worldSize;
-    Rule	    worldRule;
+    size_t	    world_size;
+    Rule	    world_rule;
+    uint_ssbo	    alive_cells;
 
     /* --- OpenGL objects --- */
     Shader          rendering_program;
-    GLuint          VAO;
-    GLuint	    VBO, EBO;
+    GLuint          cubes_vao;
+    GLuint	    instance_cube_vertices;
 
-    Shader	    passEpochCompute;
-    Shader	    generatePosBufCompute;
+    Shader	    pass_epoch_compute;
+    Shader	    gen_pos_buf_compute;
     GLuint	    positions_buffer;
 
     GLuint	    map3D[2];
 
+    glm::mat4	    world_matrix;
+    float	    view_distance;
     glm::mat4	    view_matrix;
     glm::mat4	    proj_matrix;
-   };
+    GLuint	    mvp_location;    
+
+};
