@@ -147,6 +147,7 @@ void  App::run()
 		    if (e.key.keysym.sym == SDLK_ESCAPE)  running = false;
 		    if (e.key.keysym.sym == SDLK_p)	  bAutoEpoch != bAutoEpoch;
 		    if (e.key.keysym.sym == SDLK_SPACE)	  bRunSingleEpoch = true;
+		break;
 	    }
 	}
 
