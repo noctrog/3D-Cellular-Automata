@@ -4,36 +4,80 @@
 #include <glm/gtc/type_ptr.hpp> // glm::value_ptr
 //#include "stb_image.h"
 
-#include <exception>
-#include <string>
-#include <fstream>
-#include <sstream>
+#include <stdexcept>
 #include <iostream>
-#include <vector>
-
-std::string readShaderFromFile(const char* filename)
-{
-    std::ifstream glsl_shader;
-    try
-    {
-	glsl_shader.open(filename);
-    }catch(...){
-	throw std::runtime_error(std::string("Error al abrir el archivo ") + filename);
-    }
-
-    return std::string(std::istreambuf_iterator<char>(glsl_shader),
-		       std::istreambuf_iterator<char>());
-}
+#include <cmath>
 
 App::App()
 {
     proj_matrix = glm::perspective(70.0f, 1920.0f / 1080.0f, 0.1f, 100.0f);
 }
 
+App::App(const std::string& _mapFilePath) 
+    : bRunSingleEpoch(false), bAutoEpoch(false), autoEpochRate(1.0f)
+{
+    std::ifstream mapFile;
+    mapFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    mapFile.open(_mapFilePath);
+
+    
+}
+
 App::~App()
 {
     
 }
+
+void  App::parseFile(std::ifstream& file)
+{
+    std::string ruleString;
+    std::getline(file, ruleString);
+    ruleString = ruleString.substr(6, 4);
+    worldRule.set_rule(ruleString);
+
+    std::string sizeString;
+    std::getline(file, sizeString);
+    worldSize = std::stoi(sizeString.substr(6, std::string::npos));
+
+    std::string currentLine;
+    std::getline(file, currentLine);
+    if (currentLine != "cells:"){
+	throw std::runtime_error("Bad file format");
+    }
+    else
+    {
+	// Generate initial world
+	auto init_world = std::make_unique<world_unit[]>(std::pow(worldSize, 2) *
+						    std::ceil(static_cast<float>(worldSize) / 8.0f));
+
+	while (std::getline(file, currentLine))
+	{
+	    glm::ivec3 currentPos;
+	    currentPos.x = std::stoi(std::strtok(&currentLine[0], " ,"));
+	    currentPos.y = std::stoi(std::strtok(nullptr, " ,"));
+	    currentPos.z = std::stoi(std::strtok(nullptr, " ,"));
+
+	    init_world[std::floor(static_cast<float>(currentPos.x) / 8.0f) + 
+		       currentPos.y * worldSize +
+		       currentPos.z * std::pow(worldSize, 2)].cells |= (1 << (7 - currentPos.x % 8));
+	}
+
+	// Create world buffer
+	glGenBuffers(2, map3D);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[0]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER,
+		     std::pow(worldSize, 2) * std::ceil(static_cast<float>(worldSize) / 8.0f),
+		     init_world.get(),
+		     GL_DYNAMIC_COPY);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[1]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER,
+		     std::pow(worldSize, 2) * std::ceil(static_cast<float>(worldSize) / 8.0f),
+		     nullptr,
+		     GL_DYNAMIC_COPY);
+    }
+
+}
+
 
 void  App::SDLinit()
 {
@@ -52,7 +96,6 @@ void  App::SDLinit()
     }
 
     std::cout << "Se ha pasado de glcontext" << std::endl;
-    //glcontext = std::make_unique<SDL_GLContext, sdl2::SDL_Delete>(SDL_GL_CreateContext(window.get()));
     glcontext = sdl2::GLContextPtr(new SDL_GLContext(SDL_GL_CreateContext(window.get())));
 
     SDL_GL_SetSwapInterval(20);
@@ -61,7 +104,7 @@ void  App::SDLinit()
 void  App::GLinit()
 {
     glEnable(GL_DEPTH_TEST);
-    //std::cout << glGetString(GL_VERSION) << std::endl;
+    std::cout << glGetString(GL_MAX_TEXTURE_BUFFER_SIZE) << std::endl;
     glViewport(0, 0, 1280, 720);
     GLint data = 1;
     glGetIntegerv(GL_MAX_COMPUTE_SHARED_MEMORY_SIZE, &data);
@@ -101,11 +144,23 @@ void  App::run()
 	    switch (e.type)
 	    {
 		case SDL_KEYDOWN:
-		    if (e.key.keysym.sym == SDLK_ESCAPE) running = false;
+		    if (e.key.keysym.sym == SDLK_ESCAPE)  running = false;
+		    if (e.key.keysym.sym == SDLK_p)	  bAutoEpoch != bAutoEpoch;
+		    if (e.key.keysym.sym == SDLK_SPACE)	  bRunSingleEpoch = true;
 	    }
 	}
 
 	currentTime = static_cast<float>(SDL_GetTicks())/1000.0f;
+
+	//Compute shader
+	if (bAutoEpoch || bRunSingleEpoch)
+	{
+	    // magic
+	    // passEpoch, and calculate size for positions buffer
+	    // convert world to positions buffer
+	    
+	    bRunSingleEpoch = false;
+	}
 
 	render();
 	SDL_GL_SwapWindow(window.get());

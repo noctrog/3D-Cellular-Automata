@@ -12,6 +12,7 @@ public:
 class Rule
 {
 public:
+    Rule ();
     Rule (std::string& rule_str);
     virtual	~Rule ();
 

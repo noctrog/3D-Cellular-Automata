@@ -10,10 +10,16 @@ BadRuleException::BadRuleException(const std::string& r)
 
 }
 
+Rule::Rule()
+{
+
+}
+
 Rule::Rule(std::string& rule_str)
 {
     set_rule(rule_str);
 }
+
 
 Rule::~Rule()
 {

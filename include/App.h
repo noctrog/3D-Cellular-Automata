@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <fstream>
 
 #include <GL/gl3w.h>
 #include <SDL2/SDL.h>
@@ -8,6 +10,7 @@
 
 #include <glm/glm.hpp>
 #include <Shader.h>
+#include <Rule.h>
 
 namespace sdl2
 {
@@ -21,54 +24,75 @@ namespace sdl2
     using GLContextPtr = std::unique_ptr<SDL_GLContext, SDL_Deleter>;
 }
 
+// Each World Unit will contain 8 cells
+// The value stored is if they are either 
+// alive (true, 1) or dead (false, 0);
+struct world_unit
+{
+    uint8_t cells;
+};
+
 class App
 {
 public:
     App ();
+    App (const std::string& _mapFilePath);
     virtual ~App ();
 
     /// Runs at the beginning, set up SDL and OpenGL
-    virtual void setup();
+    virtual void  setup();
 
     /// runs once right after setup
-    virtual void startup();
+    virtual void  startup();
 
     /// The program that runs each frame
-    virtual void render();
+    virtual void  render();
 
     /// Executes everything in order: setup, startup, render loop, shutdown 
-    virtual void run();
+    virtual void  run();
 
     /// Runs after render loop
-    virtual void shutdown();
+    virtual void  shutdown();
 
     /// Closes SDL and OpenGL, frees memory
-    virtual void terminate();
+    virtual void  terminate();
 
 private:
-    void SDLinit();
-    void GLinit();
+    void	  SDLinit();
+    void	  GLinit();
 
-    void UpdateTime();
+    void	  UpdateTime();
 
     sdl2::WindowPtr	window;
     sdl2::GLContextPtr	glcontext;
-    //SDL_Window* window;
-    //SDL_GLContext glcontext;
 
     /// Saves the current value of time, in seconds
     float currentTime;
 
+    /* ---   User input   --- */
+    bool	    bRunSingleEpoch;
+    bool	    bAutoEpoch;
+    float	    autoEpochRate;
+
+    /* ---  File objects  --- */
+    //std::fstream mapFile;
+    void	  parseFile(std::ifstream& file);
+
+    /* ---	World	  --- */
+    size_t	    worldSize;
+    Rule	    worldRule;
+
     /* --- OpenGL objects --- */
-    Shader*         program;
-    GLuint          VAO[2];
+    Shader          rendering_program;
+    GLuint          VAO;
     GLuint	    VBO, EBO;
 
-    GLint           mv_location;
-    GLint           proj_location;
+    Shader	    passEpochCompute;
+    Shader	    generatePosBufCompute;
+    GLuint	    positions_buffer;
 
-    GLuint	    map3D;
-    GLuint	    map3D_aux;
+    GLuint	    map3D[2];
 
+    glm::mat4	    view_matrix;
     glm::mat4	    proj_matrix;
    };

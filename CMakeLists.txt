@@ -12,18 +12,20 @@ find_package( OpenGL )
 
 set (CMAKE_DEBUG_POSTFIX "_d")
 
-if (UNIX)
-    find_package(PkgConfig REQUIRED)
-    set(COMMON_LIBS Shader App X11 Xrandr Xinerama Xi Xxf86vm Xcursor GL rt dl SDL2)
-endif()
+find_package(PkgConfig REQUIRED)
+set(COMMON_LIBS X11 Xrandr Xinerama Xi Xxf86vm Xcursor GL rt dl SDL2 Shader Rule App )
 
 set(COMMON_LIBS ${COMMON_LIBS} ${EXTRA_LIBS})
 
 add_library(Shader
 	    src/Shader/Shader.cpp)
+add_library(Rule
+	    src/Rule/Rule.cpp)
 add_library(App
 	    src/App/App.cpp
 	    src/App/gl3w.c)
+
+target_link_libraries(App Shader Rule)
 
 set(RUN_DIR ${CMAKE_SOURCE_DIR}/bin)
 
