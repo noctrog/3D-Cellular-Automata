@@ -32,6 +32,10 @@ set(RUN_DIR ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_LINUX -std=c++14")
 
 add_executable(3D_Cellular_Automata src/3D_Cellular_Automata.cpp)
+set_property(TARGET 3D_Cellular_Automata PROPERTY DEBUG_POSTFIX _d)
 target_link_libraries(3D_Cellular_Automata ${COMMON_LIBS})
 
 include_directories(include)
+
+ADD_CUSTOM_TARGET(debug ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE:STRING=Debug ${PROJECT_SOURCE_DIR})
+ADD_CUSTOM_TARGET(release ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE:STRING=Release ${PROJECT_SOURCE_DIR})
