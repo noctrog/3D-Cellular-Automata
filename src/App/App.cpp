@@ -6,23 +6,26 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 #include <cmath>
 
 App::App()
 {
     proj_matrix = glm::perspective(70.0f, 1920.0f / 1080.0f, 0.1f, 100.0f);
+
+    setup();
 }
 
 App::App(const std::string& _map_file_path) 
-    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f)
+    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), rendering_program()
 {
+    setup();
     std::ifstream map_file;
     map_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     map_file.open(_map_file_path);
 
     parseFile(map_file);    
     // TODO: move code from parseFile() and create Shader
-    rendering_program.loadFromText("../src/shaders/cube_vs.glsl", "../src/shaders/cube_fs.glsl");
 }
 
 App::~App()
@@ -56,11 +59,8 @@ void  App::parseFile(std::ifstream& file)
 	{
 	    // Integer vector to save the positions for the 3D world and compute shader
 	    glm::ivec3 currentPos;
-	    std::string::size_type sz;
-	    currentPos.x = std::stoi(currentLine, &sz);
-	    currentPos.y = std::stoi(currentLine.substr(sz), &sz);
-	    currentPos.z = std::stoi(currentLine.substr(sz));
-
+	    std::stringstream ss(currentLine);
+	    if (ss >> currentPos.x >> currentPos.y >> currentPos.z) break;
 
 	    init_world[std::floor(static_cast<float>(currentPos.x) / 8.0f) + 
 		       currentPos.y * world_size +
@@ -80,7 +80,7 @@ void  App::parseFile(std::ifstream& file)
 	glBufferData(GL_ARRAY_BUFFER, 
 		     sizeof(glm::vec3) * initial_positions.size(),
 		     initial_positions.data(),
-		     GL_DYNAMIC_COPY);
+		     GL_STATIC_DRAW);
 
 	// Create world buffer
 	glGenBuffers(2, map3D);
@@ -88,12 +88,12 @@ void  App::parseFile(std::ifstream& file)
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
 		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 8.0f),
 		     init_world.get(),
-		     GL_DYNAMIC_COPY);
+		     GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
 		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 8.0f),
 		     nullptr,
-		     GL_DYNAMIC_COPY);
+		     GL_DYNAMIC_DRAW);
     }
 }
 
@@ -114,10 +114,9 @@ void  App::SDLinit()
 	throw std::runtime_error(SDL_GetError());
     }
 
-    std::cout << "Se ha pasado de glcontext" << std::endl;
     glcontext = sdl2::GLContextPtr(new SDL_GLContext(SDL_GL_CreateContext(window.get())));
 
-    SDL_GL_SetSwapInterval(20);
+    SDL_GL_SetSwapInterval(2);
 }
 
 void  App::GLinit()
@@ -188,19 +187,26 @@ void  App::startup()
 	    -0.5f,  0.5f, -0.5f
 	};
 
+    glGenVertexArrays(1, &cubes_vao);
+    glBindVertexArray(cubes_vao);
+    
     glGenBuffers(1, &instance_cube_vertices);
     glBindBuffer(GL_ARRAY_BUFFER, instance_cube_vertices);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+
+    rendering_program = std::make_unique<Shader>();
+    rendering_program->loadFromText("../src/shaders/cube_vs.glsl", "../src/shaders/cube_fs.glsl");
 }
 
 
 void  App::render()
 {
-    static const float background_color[] = { 0.0f, 0.0f, 0.0f, 1.0f }; 
+    float background_color[] = { 0.5f + 0.5f*sin(currentTime * 3), 0.0f, 0.0f, 1.0f }; 
     glClearBufferfv(GL_COLOR, 0, background_color);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
     glBindVertexArray(cubes_vao);
+
     glBindBuffer(GL_ARRAY_BUFFER, instance_cube_vertices);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
@@ -211,17 +217,19 @@ void  App::render()
 
     glVertexAttribDivisor(1, 1);
 
-    rendering_program.use();
+    glBindVertexArray(cubes_vao);
+    rendering_program->use();
 
     glm::mat4 mvp_matrix = proj_matrix * view_matrix * world_matrix;
-    glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+    glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
 
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, alive_cells.cell_count);
+    glDrawArrays(GL_TRIANGLES, 0, 9);
+    //glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 1);
 }
 
 void  App::run()
 {
-    setup();
+    //setup();
     startup();
 
     bool running = true;
@@ -254,8 +262,6 @@ void  App::run()
 
 	render();
 	SDL_GL_SwapWindow(window.get());
-
-	SDL_Delay(10);
     }
 
     shutdown();
@@ -264,7 +270,10 @@ void  App::run()
 
 void  App::shutdown()
 {
-
+    glDeleteBuffers(1, &instance_cube_vertices);
+    glDeleteBuffers(1, &positions_buffer);
+    glDeleteBuffers(2, map3D);
+    glDeleteVertexArrays(1, &cubes_vao);
 }
 
 void  App::terminate()

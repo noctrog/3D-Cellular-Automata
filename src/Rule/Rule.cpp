@@ -2,6 +2,8 @@
 #include <vector>
 #include <cstring>
 
+#include <iostream>
+
 constexpr uint8_t max_nb = 3 * 3 * 3 - 1;
 
 BadRuleException::BadRuleException(const std::string& r)
@@ -54,14 +56,14 @@ std::string Rule::get_rule()
 void	    Rule::set_rule(std::string rule_str)
 {
     std::vector<uint8_t> rule_values;
-
-    for (auto i = std::strtok(&rule_str[0], " "); i != nullptr; i = std::strtok(NULL, " "))
-    {
-	rule_values.push_back(std::stoi(i));
-    }
+    std::string::size_type sz;
+    if (rule_str.length())		rule_values.push_back(std::stoi(rule_str, &sz));
+    if (rule_str.substr(sz).length())	rule_values.push_back(std::stoi(rule_str, &sz));
+    if (rule_str.substr(sz).length())	rule_values.push_back(std::stoi(rule_str, &sz));
+    if (rule_str.substr(sz).length())	rule_values.push_back(std::stoi(rule_str));
 
     if (rule_values.size() != 4){
-	throw BadRuleException("Bad rule: size mismatch");
+	throw BadRuleException("Bad rule: size mismatch -> Rule string: " + rule_values[0]);
     }
     for (auto i = 0; i < 4; ++i){
 	if (rule_values[i] > max_nb)

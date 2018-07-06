@@ -1,4 +1,4 @@
-#version core 450
+#version 450 core 
 
 in VS_OUT
 {
@@ -9,5 +9,5 @@ out vec4 color;
 
 void main(void)
 {
-    color = fs_in.color;
+    color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 }

@@ -69,41 +69,41 @@ private:
 
     void	  UpdateTime();
 
-    sdl2::WindowPtr	window;
-    sdl2::GLContextPtr	glcontext;
+    sdl2::WindowPtr	      window;
+    sdl2::GLContextPtr	      glcontext;
 
     /// Saves the current value of time, in seconds
     float currentTime;
 
     /* ---   User input   --- */
-    bool	    b_run_single_epoch;
-    bool	    b_auto_epoch;
-    float	    auto_epoch_rate;
+    bool		      b_run_single_epoch;
+    bool		      b_auto_epoch;
+    float		      auto_epoch_rate;
 
     /* ---  File objects  --- */
     //std::fstream mapFile;
     void	  parseFile(std::ifstream& file);
 
     /* ---	World	  --- */
-    size_t	    world_size;
-    Rule	    world_rule;
-    uint_ssbo	    alive_cells;
+    size_t		      world_size;
+    Rule		      world_rule;
+    uint_ssbo		      alive_cells;
 
     /* --- OpenGL objects --- */
-    Shader          rendering_program;
-    GLuint          cubes_vao;
-    GLuint	    instance_cube_vertices;
+    std::unique_ptr<Shader>   rendering_program;
+    GLuint		      cubes_vao;
+    GLuint		      instance_cube_vertices;
 
-    Shader	    pass_epoch_compute;
-    Shader	    gen_pos_buf_compute;
-    GLuint	    positions_buffer;
+    std::unique_ptr<Shader>   pass_epoch_compute;
+    std::unique_ptr<Shader>   gen_pos_buf_compute;
+    GLuint		      positions_buffer;
 
-    GLuint	    map3D[2];
+    GLuint		      map3D[2];
 
-    glm::mat4	    world_matrix;
-    float	    view_distance;
-    glm::mat4	    view_matrix;
-    glm::mat4	    proj_matrix;
-    GLuint	    mvp_location;    
+    glm::mat4		      world_matrix;
+    float		      view_distance;
+    glm::mat4		      view_matrix;
+    glm::mat4		      proj_matrix;
+    GLuint		      mvp_location;    
 
 };

@@ -69,11 +69,13 @@ void	    Shader::loadFromText(const std::string& file_path, size_t shader_type)
     }
 
     glAttachShader(program, shaders[shader_type]);
-    std::cout << glGetError() << ", : " << shaders[shader_type] << std::endl;
+    if (glGetError())
+	std::cout << glGetError() << ", : " << program << " " << shaders[shader_type] << std::endl;
 }
 
 void	    Shader::loadFromText(const std::string& vertex_path, const std::string& fragment_path)
 {
+    program = glCreateProgram();
     loadFromText(vertex_path, VERTEX);
     loadFromText(fragment_path, FRAGMENT);
     link();
