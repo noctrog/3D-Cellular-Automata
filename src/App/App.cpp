@@ -22,6 +22,7 @@ App::App(const std::string& _map_file_path)
 
     parseFile(map_file);    
     // TODO: move code from parseFile() and create Shader
+    rendering_program.loadFromText("../src/shaders/cube_vs.glsl", "../src/shaders/cube_fs.glsl");
 }
 
 App::~App()
@@ -210,7 +211,7 @@ void  App::render()
 
     glVertexAttribDivisor(1, 1);
 
-    glUseProgram(rendering_program.getProgram());
+    rendering_program.use();
 
     glm::mat4 mvp_matrix = proj_matrix * view_matrix * world_matrix;
     glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
