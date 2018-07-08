@@ -135,15 +135,18 @@ void  App::setup()
 
 void  App::startup()
 {
-    proj_matrix	  = glm::perspective(70.0f, 1200.0f/720.0f, 100.0f, 0.1f);
-    float dist	  = static_cast<float>(world_size) / 2.0f;
-    world_matrix  = glm::translate(glm::mat4(1.0f), glm::vec3(-dist));
-    view_distance = dist;
-    view_matrix	  = glm::lookAt(glm::vec3(view_distance, 0.0f, 0.0f),
-				glm::vec3(0.0f, 0.0f, 0.0f),
-				glm::vec3(0.0f, 1.0f, 0.0f));
+    proj_matrix	      = glm::perspective(70.0f, 1200.0f/720.0f, 100.0f, 0.1f);
+    float dist	      = static_cast<float>(world_size) / 2.0f;
+    world_matrix      = glm::translate(glm::mat4(1.0f), glm::vec3(dist));
+    view_distance     = dist;
+    glm::vec3 center  = glm::vec3(static_cast<float>(world_size) / 2.0f,
+				  static_cast<float>(world_size) / 2.0f,
+				  static_cast<float>(world_size) / 2.0f);
+    view_matrix	      = glm::lookAt(glm::vec3(view_distance, 0.0f, 0.0f),
+				    center,
+				    glm::vec3(0.0f, 1.0f, 0.0f));
 
-    static const float    cube_vertices[] = {
+    static const GLfloat    cube_vertices[] = {
 	    -0.5f, -0.5f, -0.5f,
 	     0.5f, -0.5f, -0.5f,
 	     0.5f,  0.5f, -0.5f,
@@ -193,6 +196,8 @@ void  App::startup()
     glGenBuffers(1, &instance_cube_vertices);
     glBindBuffer(GL_ARRAY_BUFFER, instance_cube_vertices);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
 
     rendering_program = std::make_unique<Shader>();
     rendering_program->loadFromText("../src/shaders/cube_vs.glsl", "../src/shaders/cube_fs.glsl");
@@ -203,19 +208,18 @@ void  App::render()
 {
     float background_color[] = { 0.5f + 0.5f*sin(currentTime * 3), 0.0f, 0.0f, 1.0f }; 
     glClearBufferfv(GL_COLOR, 0, background_color);
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 1.0f, 0);
+    static const float one = 1.0f;
+    glClearBufferfv(GL_DEPTH, 0, &one);
 
     glBindVertexArray(cubes_vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, instance_cube_vertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(1, 12);
 
     glBindVertexArray(cubes_vao);
     rendering_program->use();
@@ -223,8 +227,9 @@ void  App::render()
     glm::mat4 mvp_matrix = proj_matrix * view_matrix * world_matrix;
     glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
 
-    glDrawArrays(GL_TRIANGLES, 0, 9);
-    //glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 1);
+    //glDrawArrays(GL_TRIANGLES, 0, 36);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 10);
 }
 
 void  App::run()
