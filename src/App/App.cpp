@@ -93,6 +93,7 @@ void  App::parseFile(std::ifstream& file)
 		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 8.0f),
 		     init_world.get(),
 		     GL_DYNAMIC_DRAW);
+
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
 		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 8.0f),
@@ -140,15 +141,12 @@ void  App::setup()
 void  App::startup()
 {
     proj_matrix	      = glm::perspective(70.0f, 1200.0f/720.0f, 100.0f, 0.1f);
-    float dist	      = static_cast<float>(world_size) / 2.0f;
-    world_matrix      = glm::translate(glm::mat4(1.0f), glm::vec3(dist));
+    float dist	      = static_cast<float>(world_size);
+    world_matrix      = glm::translate(glm::mat4(1.0f), glm::vec3(-dist/2.0f));
     view_distance     = dist;
-    glm::vec3 center  = glm::vec3(static_cast<float>(world_size) / 2.0f,
-				  static_cast<float>(world_size) / 2.0f,
-				  static_cast<float>(world_size) / 2.0f);
-    view_matrix	      = glm::lookAt(glm::vec3(view_distance, 0.0f, 0.0f),
-				    center,
-				    glm::vec3(0.0f, 1.0f, 0.0f));
+    //view_matrix	      = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), view_distance * sin(cam_angle),0.0f),
+				    //glm::vec3(0.0f, 0.0f, 0.0f),
+				    //glm::vec3(0.0f, 0.0f, 1.0f));
 
     static const GLfloat    cube_vertices[] = {
 	    -0.5f, -0.5f, -0.5f,
@@ -230,12 +228,11 @@ void  App::render()
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 10);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, alive_cells.cell_count);
 }
 
 void  App::run()
 {
-    //setup();
     startup();
 
     bool running = true;
@@ -250,6 +247,9 @@ void  App::run()
 		    if (e.key.keysym.sym == SDLK_ESCAPE)  running = false;
 		    if (e.key.keysym.sym == SDLK_p)	  b_auto_epoch != b_auto_epoch;
 		    if (e.key.keysym.sym == SDLK_SPACE)	  b_run_single_epoch = true;
+
+		    if (e.key.keysym.sym == SDLK_a)	  cam_angle -= 0.1f;
+		    if (e.key.keysym.sym == SDLK_d)	  cam_angle += 0.1f;
 		break;
 	    }
 	}
@@ -265,7 +265,9 @@ void  App::run()
 	    
 	    b_run_single_epoch = false;
 	}
-
+        view_matrix = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), 0.0f, view_distance * sin(cam_angle)),
+		      glm::vec3(0.0f, 0.0f, 0.0f),
+		      glm::vec3(0.0f, 1.0f, 0.0f));
 	render();
 	SDL_GL_SwapWindow(window.get());
     }

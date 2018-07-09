@@ -94,6 +94,8 @@ private:
     GLuint		      cubes_vao;
     GLuint		      instance_cube_vertices;
 
+    float		      cam_angle;
+
     std::unique_ptr<Shader>   pass_epoch_compute;
     std::unique_ptr<Shader>   gen_pos_buf_compute;
     GLuint		      positions_buffer;
