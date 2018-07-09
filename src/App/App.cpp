@@ -54,13 +54,13 @@ void  App::parseFile(std::ifstream& file)
 	// Generate initial world
 	auto init_world = std::make_unique<world_unit[]>(std::pow(world_size, 2) *
 						    std::ceil(static_cast<float>(world_size) / 8.0f));
-	std::vector<glm::ivec3> initial_positions;
+	std::vector<glm::vec3> initial_positions;
 	while (std::getline(file, currentLine))
 	{
 	    // Integer vector to save the positions for the 3D world and compute shader
 	    glm::ivec3 currentPos;
 	    std::stringstream ss(currentLine);
-	    if (ss >> currentPos.x >> currentPos.y >> currentPos.z) break;
+	    if (!(ss >> currentPos.x >> currentPos.y >> currentPos.z)) break;
 
 	    init_world[std::floor(static_cast<float>(currentPos.x) / 8.0f) + 
 		       currentPos.y * world_size +
@@ -71,6 +71,10 @@ void  App::parseFile(std::ifstream& file)
 					static_cast<float>(currentPos.y),
 					static_cast<float>(currentPos.z));
 	    initial_positions.push_back(initial_position);
+
+	    std::cout << "X: " << initial_positions.back().x << 
+			" Y: " << initial_positions.back().y <<
+			" Z: " << initial_positions.back().z << std::endl;
 	}
 	alive_cells.cell_count = initial_positions.size();
 
@@ -79,8 +83,8 @@ void  App::parseFile(std::ifstream& file)
 	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
 	glBufferData(GL_ARRAY_BUFFER, 
 		     sizeof(glm::vec3) * initial_positions.size(),
-		     initial_positions.data(),
-		     GL_STATIC_DRAW);
+		     glm::value_ptr(initial_positions[0]),
+		     GL_DYNAMIC_DRAW);
 
 	// Create world buffer
 	glGenBuffers(2, map3D);
@@ -199,6 +203,12 @@ void  App::startup()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
+    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribDivisor(1, 1);
+
+
     rendering_program = std::make_unique<Shader>();
     rendering_program->loadFromText("../src/shaders/cube_vs.glsl", "../src/shaders/cube_fs.glsl");
 }
@@ -213,21 +223,12 @@ void  App::render()
 
     glBindVertexArray(cubes_vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER, instance_cube_vertices);
-    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribDivisor(1, 12);
-
     glBindVertexArray(cubes_vao);
     rendering_program->use();
 
     glm::mat4 mvp_matrix = proj_matrix * view_matrix * world_matrix;
-    glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
 
-    //glDrawArrays(GL_TRIANGLES, 0, 36);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 10);
 }
