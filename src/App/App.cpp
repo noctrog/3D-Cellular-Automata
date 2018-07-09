@@ -17,7 +17,7 @@ App::App()
 }
 
 App::App(const std::string& _map_file_path) 
-    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), rendering_program()
+    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f)
 {
     setup();
     std::ifstream map_file;
@@ -112,6 +112,7 @@ void  App::SDLinit()
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
  
     window.reset(SDL_CreateWindow("App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_OPENGL));
