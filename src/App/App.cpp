@@ -17,7 +17,7 @@ App::App()
 }
 
 App::App(const std::string& _map_file_path) 
-    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f)
+    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), cam_angle(0)
 {
     setup();
     std::ifstream map_file;
@@ -53,7 +53,7 @@ void  App::parseFile(std::ifstream& file)
     {
 	// Generate initial world
 	auto init_world = std::make_unique<world_unit[]>(std::pow(world_size, 2) *
-						    std::ceil(static_cast<float>(world_size) / 8.0f));
+						    std::ceil(static_cast<float>(world_size) / 32.0f));
 	std::vector<glm::vec3> initial_positions;
 	while (std::getline(file, currentLine))
 	{
@@ -62,9 +62,9 @@ void  App::parseFile(std::ifstream& file)
 	    std::stringstream ss(currentLine);
 	    if (!(ss >> currentPos.x >> currentPos.y >> currentPos.z)) break;
 
-	    init_world[std::floor(static_cast<float>(currentPos.x) / 8.0f) + 
+	    init_world[std::floor(static_cast<float>(currentPos.x) / 32.0f) + 
 		       currentPos.y * world_size +
-		       currentPos.z * std::pow(world_size, 2)].cells |= (1 << (7 - currentPos.x % 8));
+		       currentPos.z * std::pow(world_size, 2)].cells |= (1 << (31 - currentPos.x % 32));
 
 	    // Float vector to save the positions for drawing the cubes
 	    glm::vec3 initial_position (static_cast<float>(currentPos.x),
@@ -79,7 +79,7 @@ void  App::parseFile(std::ifstream& file)
 	alive_cells.cell_count = initial_positions.size();
 
 	// Create positions buffer
-	glGenBuffers(1, &positions_buffer);
+	glCreateBuffers(1, &positions_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
 	glBufferData(GL_ARRAY_BUFFER, 
 		     sizeof(glm::vec3) * initial_positions.size(),
@@ -87,16 +87,16 @@ void  App::parseFile(std::ifstream& file)
 		     GL_DYNAMIC_DRAW);
 
 	// Create world buffer
-	glGenBuffers(2, map3D);
+	glCreateBuffers(2, map3D);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[0]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
-		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 8.0f),
+		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size)),
 		     init_world.get(),
 		     GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
-		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 8.0f),
+		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size)),
 		     nullptr,
 		     GL_DYNAMIC_DRAW);
     }
@@ -145,9 +145,9 @@ void  App::startup()
     float dist	      = static_cast<float>(world_size);
     world_matrix      = glm::translate(glm::mat4(1.0f), glm::vec3(-dist/2.0f));
     view_distance     = dist;
-    //view_matrix	      = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), view_distance * sin(cam_angle),0.0f),
-				    //glm::vec3(0.0f, 0.0f, 0.0f),
-				    //glm::vec3(0.0f, 0.0f, 1.0f));
+    view_matrix	      = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), view_distance * sin(cam_angle),0.0f),
+				    glm::vec3(0.0f, 0.0f, 0.0f),
+				    glm::vec3(0.0f, 0.0f, 1.0f));
 
     static const GLfloat    cube_vertices[] = {
 	    -0.5f, -0.5f, -0.5f,
@@ -193,10 +193,10 @@ void  App::startup()
 	    -0.5f,  0.5f, -0.5f
 	};
 
-    glGenVertexArrays(1, &cubes_vao);
+    glCreateVertexArrays(1, &cubes_vao);
     glBindVertexArray(cubes_vao);
     
-    glGenBuffers(1, &instance_cube_vertices);
+    glCreateBuffers(1, &instance_cube_vertices);
     glBindBuffer(GL_ARRAY_BUFFER, instance_cube_vertices);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -219,8 +219,6 @@ void  App::render()
     glClearBufferfv(GL_COLOR, 0, background_color);
     static const float one = 1.0f;
     glClearBufferfv(GL_DEPTH, 0, &one);
-
-    glBindVertexArray(cubes_vao);
 
     glBindVertexArray(cubes_vao);
     rendering_program->use();
