@@ -17,9 +17,9 @@ Rule::Rule()
 
 }
 
-Rule::Rule(std::string& rule_str)
+Rule::Rule(std::string& _rule_str)
 {
-    set_rule(rule_str);
+    set_rule(_rule_str);
 }
 
 
@@ -28,27 +28,32 @@ Rule::~Rule()
 
 }
 
-uint8_t	    Rule::get_min_survive()
+uint32_t      Rule::get_min_survive()
 {
-    return minSurvive;
+    return the_rule[0];
 }
 
-uint8_t	    Rule::get_max_survive()
+uint32_t      Rule::get_max_survive()
 {
-    return maxSurvive;
+    return the_rule[1];
 }
 
-uint8_t	    Rule::get_min_born()
+uint32_t      Rule::get_min_born()
 {
-    return minBorn;
+    return the_rule[2];
 }
 
-uint8_t	    Rule::get_max_born()
+uint32_t      Rule::get_max_born()
 {
-    return maxBorn;
+    return the_rule[3];
 }
 
-std::string Rule::get_rule()
+std::string Rule::get_rule_str()
+{
+    return rule_str;
+}
+
+std::array<uint32_t, 4> Rule::get_rule()
 {
     return the_rule;
 }
@@ -73,8 +78,10 @@ void	    Rule::set_rule(std::string rule_str)
 	throw BadRuleException("Bad rule: min value larger than max value");
     }
 
-    minSurvive	= rule_values[0];
-    maxSurvive	= rule_values[1];
-    minBorn	= rule_values[2];
-    maxBorn	= rule_values[3];
+    this->rule_str = rule_str;
+
+    the_rule[0]	= rule_values[0];
+    the_rule[1]	= rule_values[1];
+    the_rule[2]	= rule_values[2];
+    the_rule[3]	= rule_values[3];
 }
