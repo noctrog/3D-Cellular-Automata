@@ -85,9 +85,10 @@ private:
     void	  parseFile(std::ifstream& file);
 
     /* ---	World	  --- */
-    size_t		      world_size;
+    uint32_t		      world_size;
     Rule		      world_rule;
-    uint_ssbo		      alive_cells;
+    uint32_t		      alive_cells;
+    bool		      even_epoch;
 
     /* --- OpenGL objects --- */
     std::unique_ptr<Shader>   rendering_program;
@@ -101,6 +102,7 @@ private:
     GLuint		      positions_buffer;
 
     GLuint		      map3D[2];
+    GLuint		      alive_cells_atc;
 
     glm::mat4		      world_matrix;
     float		      view_distance;

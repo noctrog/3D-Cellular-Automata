@@ -17,7 +17,8 @@ App::App()
 }
 
 App::App(const std::string& _map_file_path) 
-    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), cam_angle(0)
+    : b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), cam_angle(0), even_epoch(false),
+      alive_cells(0)
 {
     setup();
     std::ifstream map_file;
@@ -76,7 +77,7 @@ void  App::parseFile(std::ifstream& file)
 			" Y: " << initial_positions.back().y <<
 			" Z: " << initial_positions.back().z << std::endl;
 	}
-	alive_cells.cell_count = initial_positions.size();
+	alive_cells = initial_positions.size();
 
 	// Create positions buffer
 	glCreateBuffers(1, &positions_buffer);
@@ -207,15 +208,24 @@ void  App::startup()
     glEnableVertexAttribArray(1);
     glVertexAttribDivisor(1, 1);
 
+    glBindVertexArray(0);
+
+    glCreateBuffers(1, &alive_cells_atc);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
+
 
     rendering_program = std::make_unique<Shader>();
     rendering_program->loadFromText("../src/shaders/cube_vs.glsl", "../src/shaders/cube_fs.glsl");
+
+    pass_epoch_compute = std::make_unique<Shader>();
+    pass_epoch_compute->loadFromText("../src/shaders/epoch_compute.glsl", Shader::COMPUTE);
 }
 
 
 void  App::render()
 {
-    float background_color[] = { 0.5f + 0.5f*sin(currentTime * 3), 0.0f, 0.0f, 1.0f }; 
+    float background_color[] = { 0.5f + 0.1f*sin(currentTime), 0.0f, 0.5f, 1.0f }; 
     glClearBufferfv(GL_COLOR, 0, background_color);
     static const float one = 1.0f;
     glClearBufferfv(GL_DEPTH, 0, &one);
@@ -227,7 +237,7 @@ void  App::render()
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, alive_cells.cell_count);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, alive_cells);
 }
 
 void  App::run()
@@ -258,10 +268,61 @@ void  App::run()
 	//Compute shader
 	if (b_auto_epoch || b_run_single_epoch)
 	{
-	    // magic
-	    // passEpoch, and calculate size for positions buffer
-	    // convert world to positions buffer
+	    /*
+	     *	  First stage
+	     *    Read world, apply rule to every cell and update it
+	     *    Also, count how many cells are alive in new epoch
+	     */
+	    pass_epoch_compute->use();
+
+	    glUniform1ui(0, world_size);
+	    glUniform4uiv(1, 1, world_rule.get_rule().data());
+
+	    // Select input and output map and bind them
+	    GLuint input_world = 0, output_world = 0;
+	    if (even_epoch) { input_world = map3D[0]; output_world = map3D[1];	}
+	    else	    { input_world = map3D[1]; output_world = map3D[0];	}
+	    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, input_world);
+	    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, output_world);
+
+	    // Set cell counter to 0 and bind it
+	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
+	    uint32_t zero = 0;
+	    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
+	    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, input_world);
+
+	    // Change even to odd and vice_versa
+	    even_epoch = !even_epoch;
 	    
+	    // Calculate how much compute groups are needed and execute
+	    uint32_t numWorkGroups = world_size / 10;
+	    glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
+
+	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
+	    GLuint* alive_cells_data = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
+								  0,
+								  sizeof(uint32_t),
+								  GL_MAP_READ_BIT);
+	    alive_cells = *alive_cells_data;
+	    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+
+	    /*
+	     *Second stage
+	     *Re allocate positions_buffer and from the new world generated,
+	     *fill the new positions_buffer (needed by glDrawInstanced)
+	     */
+
+	    // convert world to positions buffer
+	    // BIND IT IN SHADER STORAGE BUFFER??????
+	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
+	    glDeleteBuffers(1, positions_buffer);
+	    glCreateBuffers(1, &positions_buffer);
+	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
+	    glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * alive_cells, nullptr, GL_DYNAMIC_DRAW);
+
+	    
+
+
 	    b_run_single_epoch = false;
 	}
         view_matrix = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), 0.0f, view_distance * sin(cam_angle)),
