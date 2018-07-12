@@ -220,8 +220,12 @@ void  App::startup()
 
     pass_epoch_compute = std::make_unique<Shader>();
     pass_epoch_compute->loadFromText("../src/shaders/epoch_compute.glsl", Shader::COMPUTE);
-}
+    pass_epoch_compute->link();
 
+    gen_pos_buf_compute = std::make_unique<Shader>();
+    gen_pos_buf_compute->loadFromText("../src/shaders/gen_pos_compute.glsl", Shader::COMPUTE);
+    gen_pos_buf_compute->link();
+}
 
 void  App::render()
 {
@@ -289,22 +293,35 @@ void  App::run()
 	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
 	    uint32_t zero = 0;
 	    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
-	    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, input_world);
+	    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, alive_cells_atc);
 
 	    // Change even to odd and vice_versa
 	    even_epoch = !even_epoch;
 	    
 	    // Calculate how much compute groups are needed and execute
-	    uint32_t numWorkGroups = world_size / 10;
+	    uint32_t numWorkGroups = world_size / 100;
 	    glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
 
-	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
-	    GLuint* alive_cells_data = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
+	    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+	    // Get the total amount of alive cells (held by the atomic counter)
+	    GLuint tmp = 0;
+	    glBindBuffer(GL_COPY_READ_BUFFER, alive_cells_atc);
+	    glCreateBuffers(1, &tmp);
+	    glBindBuffer(GL_COPY_WRITE_BUFFER, tmp);
+	    glBufferData(GL_COPY_WRITE_BUFFER, sizeof(uint32_t), nullptr, GL_DYNAMIC_COPY);
+	    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(uint32_t));
+	    GLuint* alive_cells_data = (GLuint*) glMapBufferRange(GL_COPY_WRITE_BUFFER,
 								  0,
 								  sizeof(uint32_t),
-								  GL_MAP_READ_BIT);
-	    alive_cells = *alive_cells_data;
-	    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+								  GL_MAP_READ_BIT); 
+	    alive_cells = alive_cells_data[0];
+	    std::cout << "alive_cells_data[0] = " << alive_cells_data[0] << std::endl;
+	    glUnmapBuffer(GL_COPY_WRITE_BUFFER);
+	    glDeleteBuffers(1, &tmp);
+	    std::cout << "OpenGL error: " << glGetError() << std::endl;
+
+	    std::cout << "Cells: " << alive_cells << std::endl;
 
 	    /*
 	     *Second stage
@@ -312,19 +329,42 @@ void  App::run()
 	     *fill the new positions_buffer (needed by glDrawInstanced)
 	     */
 
-	    // convert world to positions buffer
-	    // BIND IT IN SHADER STORAGE BUFFER??????
+	    gen_pos_buf_compute->use();
+
+	    // Bind map
+	    glBindBuffer(GL_SHADER_STORAGE_BUFFER, output_world);
+	    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, output_world);
+
+	    // Create new positions buffer
 	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
-	    glDeleteBuffers(1, positions_buffer);
+	    glDeleteBuffers(1, &positions_buffer);
 	    glCreateBuffers(1, &positions_buffer);
 	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
-	    glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * alive_cells, nullptr, GL_DYNAMIC_DRAW);
+	    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GL_FLOAT) * alive_cells, nullptr, GL_DYNAMIC_DRAW);
 
+	    // Bind positions buffer to the shader
+	    glBindBuffer(GL_SHADER_STORAGE_BUFFER, positions_buffer);
+	    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, positions_buffer);
 	    
+	    // The atomic counter now serves as an index to access the positions buffer
+	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
+	    GLuint* ptr = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),
+				    GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+	    ptr[0] = 0;
+	    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+	    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
+	    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, input_world);
 
+	    // Set the map size
+	    glUniform1ui(0, world_size);	    
+
+	    glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
+
+	    std::cout << "Evolucion finalizada" << std::endl;
 
 	    b_run_single_epoch = false;
 	}
+	
         view_matrix = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), 0.0f, view_distance * sin(cam_angle)),
 		      glm::vec3(0.0f, 0.0f, 0.0f),
 		      glm::vec3(0.0f, 1.0f, 0.0f));

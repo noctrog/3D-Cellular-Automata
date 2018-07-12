@@ -11,6 +11,7 @@ layout (binding = 0, std430) readonly buffer map3D_in
 {
     uint world_cells[];       
 };
+    
 layout (binding = 1, std430) buffer map3D_out
 {
     uint aux_world_cells[];
@@ -84,6 +85,7 @@ bool evolve()
 
 void main(void)
 {
+    atomicCounterIncrement(alive_cells);
     // Only run if current compute unit is inside the world
     if (gl_GlobalInvocationID.x < map_size &&
 	gl_GlobalInvocationID.y < map_size &&
