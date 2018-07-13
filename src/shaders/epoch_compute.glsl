@@ -20,7 +20,24 @@ layout (binding = 1, std430) buffer map3D_out
 // Add atomic counter
 layout (binding = 2) uniform atomic_uint alive_cells;
 
-uint num_neighbours()
+uint  getCellPos(uvec3 position)
+{
+    uint n_cells_per_row = uint(ceil(map_size / 32));
+    return uint(floor(position.x / 32)	      +
+		position.y * n_cells_per_row  +
+		position.z * pow(n_cells_per_row, 2));
+}
+
+bool  getCell(uvec3 position)
+{
+
+    return bool(
+	world_cells[getCellPos(position)] & uint(uint(1) << (uint(31) - uint(mod(position.x, 32))))
+    );
+}
+
+
+uint numNeighbours()
 {
     uint num_nb = 0;
     int i, j, k;
@@ -31,10 +48,7 @@ uint num_neighbours()
 		    gl_GlobalInvocationID.x + i >= 0 && gl_GlobalInvocationID.x + i < map_size &&
 		    gl_GlobalInvocationID.y + j >= 0 && gl_GlobalInvocationID.y + j < map_size &&
 		    gl_GlobalInvocationID.z + k >= 0 && gl_GlobalInvocationID.z + k < map_size &&
-		    bool(world_cells[uint((floor((gl_GlobalInvocationID.x + i) / 32) +
-		    (gl_GlobalInvocationID.y + j) * map_size +
-		    (gl_GlobalInvocationID.z + k) * pow(map_size, 2)))] & 
-		    uint(((uint(1) << (uint(31) - uint(mod(gl_GlobalInvocationID.x + i, 32))))) != uint(0)))){
+		    getCell(uvec3(gl_GlobalInvocationID.x + i, gl_GlobalInvocationID.y + j, gl_GlobalInvocationID.z + k))){
 		    
 		    ++num_nb;
 		}
@@ -47,36 +61,30 @@ uint num_neighbours()
 
 bool evolve()
 {
-    uint num_nb = num_neighbours();
-    if (bool((world_cells[uint(floor((gl_GlobalInvocationID.x)/32.0f) +
-	gl_GlobalInvocationID.y * map_size + gl_GlobalInvocationID.z * pow(map_size,2))] &
-	(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f))))))
+    uint num_nb = numNeighbours();
+    if (getCell(gl_GlobalInvocationID))
     {
 	if (num_nb <= rule.x || num_nb >= rule.y){
-	    aux_world_cells[uint(floor((gl_GlobalInvocationID.x)/32.0f) + 
-	    gl_GlobalInvocationID.y * map_size + gl_GlobalInvocationID.z * pow(map_size, 2))] &=
-	    ~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
+	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] &=
+				~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
 	    return false;
 	}
 	else{
-	    aux_world_cells[uint(floor((gl_GlobalInvocationID.x)/32.0f) + 
-	    gl_GlobalInvocationID.y * map_size + gl_GlobalInvocationID.z * pow(map_size, 2))] |=
-	    (uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
+	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] |=
+				(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
 	    return true;
 	}
     }
     else
     {
 	if (num_nb >= rule.z || num_nb <= rule.a){
-	    aux_world_cells[uint(floor((gl_GlobalInvocationID.x)/32.0f) + 
-	    gl_GlobalInvocationID.y * map_size + gl_GlobalInvocationID.z * pow(map_size, 2))] |=
-	    (uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
+	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] |=
+				(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
 	    return true;
 	}
 	else{
-	    aux_world_cells[uint(floor((gl_GlobalInvocationID.x)/32.0f) + 
-	    gl_GlobalInvocationID.y * map_size + gl_GlobalInvocationID.z * pow(map_size, 2))] &=
-	    ~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
+	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] &=
+				~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
 	    return false;
 	}
     }
@@ -85,7 +93,6 @@ bool evolve()
 
 void main(void)
 {
-    atomicCounterIncrement(alive_cells);
     // Only run if current compute unit is inside the world
     if (gl_GlobalInvocationID.x < map_size &&
 	gl_GlobalInvocationID.y < map_size &&

@@ -59,19 +59,20 @@ void  App::parseFile(std::ifstream& file)
 	while (std::getline(file, currentLine))
 	{
 	    // Integer vector to save the positions for the 3D world and compute shader
-	    glm::ivec3 currentPos;
+	    glm::ivec3 current_pos;
 	    std::stringstream ss(currentLine);
-	    if (!(ss >> currentPos.x >> currentPos.y >> currentPos.z)) break;
+	    if (!(ss >> current_pos.x >> current_pos.y >> current_pos.z)) break;
 
-	    init_world[std::floor(static_cast<float>(currentPos.x) / 32.0f) + 
-		       currentPos.y * world_size +
-		       currentPos.z * std::pow(world_size, 2)].cells |= (1 << (31 - currentPos.x % 32));
+	    // Save positions as floats for the positions buffer
+	    glm::vec3 current_pos_f (static_cast<float>(current_pos.x),
+					static_cast<float>(current_pos.y),
+					static_cast<float>(current_pos.z));
+	    initial_positions.push_back(current_pos_f);
 
-	    // Float vector to save the positions for drawing the cubes
-	    glm::vec3 initial_position (static_cast<float>(currentPos.x),
-					static_cast<float>(currentPos.y),
-					static_cast<float>(currentPos.z));
-	    initial_positions.push_back(initial_position);
+	    uint32_t n_cells_per_row = std::ceil(static_cast<float>(world_size) / 32.0f);
+	    init_world[	std::floor(current_pos_f.x / 32.0f)	    + 
+			n_cells_per_row * current_pos.y		    +
+			std::pow(n_cells_per_row, 2) * current_pos.z].cells |= (1 << (31 - current_pos.x % 32));
 
 	    std::cout << "X: " << initial_positions.back().x << 
 			" Y: " << initial_positions.back().y <<
@@ -86,6 +87,7 @@ void  App::parseFile(std::ifstream& file)
 		     sizeof(glm::vec3) * initial_positions.size(),
 		     glm::value_ptr(initial_positions[0]),
 		     GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Create world buffer
 	glCreateBuffers(2, map3D);
@@ -100,6 +102,7 @@ void  App::parseFile(std::ifstream& file)
 		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size)),
 		     nullptr,
 		     GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
 }
 
@@ -234,7 +237,11 @@ void  App::render()
     static const float one = 1.0f;
     glClearBufferfv(GL_DEPTH, 0, &one);
 
+    // Update VAO to read from the new positions buffer
     glBindVertexArray(cubes_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
     rendering_program->use();
 
     glm::mat4 mvp_matrix = proj_matrix * view_matrix * world_matrix;
@@ -277,10 +284,6 @@ void  App::run()
 	     *    Read world, apply rule to every cell and update it
 	     *    Also, count how many cells are alive in new epoch
 	     */
-	    pass_epoch_compute->use();
-
-	    glUniform1ui(0, world_size);
-	    glUniform4uiv(1, 1, world_rule.get_rule().data());
 
 	    // Select input and output map and bind them
 	    GLuint input_world = 0, output_world = 0;
@@ -295,32 +298,29 @@ void  App::run()
 	    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
 	    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, alive_cells_atc);
 
+	    pass_epoch_compute->use();
+
+	    glUniform1ui(0, world_size);
+	    glUniform4uiv(1, 1, world_rule.get_rule().data());
 	    // Change even to odd and vice_versa
 	    even_epoch = !even_epoch;
 	    
 	    // Calculate how much compute groups are needed and execute
-	    uint32_t numWorkGroups = world_size / 100;
+	    uint32_t numWorkGroups = std::ceil(static_cast<float>(world_size) / 10.0f);
+	    //std::cout << numWorkGroups << std::endl;
 	    glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
 
 	    glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	    // Get the total amount of alive cells (held by the atomic counter)
-	    GLuint tmp = 0;
-	    glBindBuffer(GL_COPY_READ_BUFFER, alive_cells_atc);
-	    glCreateBuffers(1, &tmp);
-	    glBindBuffer(GL_COPY_WRITE_BUFFER, tmp);
-	    glBufferData(GL_COPY_WRITE_BUFFER, sizeof(uint32_t), nullptr, GL_DYNAMIC_COPY);
-	    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(uint32_t));
-	    GLuint* alive_cells_data = (GLuint*) glMapBufferRange(GL_COPY_WRITE_BUFFER,
+	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
+	    GLuint* alive_cells_data = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
 								  0,
 								  sizeof(uint32_t),
 								  GL_MAP_READ_BIT); 
 	    alive_cells = alive_cells_data[0];
-	    std::cout << "alive_cells_data[0] = " << alive_cells_data[0] << std::endl;
-	    glUnmapBuffer(GL_COPY_WRITE_BUFFER);
-	    glDeleteBuffers(1, &tmp);
-	    std::cout << "OpenGL error: " << glGetError() << std::endl;
-
+	    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+	    //std::cout << "OpenGL error: " << glGetError() << std::endl;
 	    std::cout << "Cells: " << alive_cells << std::endl;
 
 	    /*
@@ -336,7 +336,6 @@ void  App::run()
 	    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, output_world);
 
 	    // Create new positions buffer
-	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
 	    glDeleteBuffers(1, &positions_buffer);
 	    glCreateBuffers(1, &positions_buffer);
 	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
@@ -348,10 +347,6 @@ void  App::run()
 	    
 	    // The atomic counter now serves as an index to access the positions buffer
 	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
-	    GLuint* ptr = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),
-				    GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-	    ptr[0] = 0;
-	    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 	    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
 	    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, input_world);
 
@@ -360,9 +355,16 @@ void  App::run()
 
 	    glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
 
-	    std::cout << "Evolucion finalizada" << std::endl;
-
 	    b_run_single_epoch = false;
+
+
+
+	    float* tmp = (float*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+	    *tmp = 7.0f; *(tmp + 1) = 7.0f; *(tmp + 2) = 7.0f;
+	    for (size_t i = 0; i < alive_cells; ++i){
+		std::cout << "Nueva pos: " << *(tmp++) << ", " << *(tmp++) << ", " << *(tmp++) << std::endl;
+	    }
+	    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 	}
 	
         view_matrix = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), 0.0f, view_distance * sin(cam_angle)),

@@ -14,16 +14,22 @@ layout (binding = 0, std430) readonly buffer map3D_in
 
 layout (binding = 1, std430) writeonly buffer pos_buffer
 {
-    uvec3 positions[];
+    vec3 positions[];
 };
 
 layout (binding = 2) uniform atomic_uint current_index;
 
+uint  getCellPos(uvec3 position)
+{
+    uint n_cells_per_row = uint(ceil(map_size / 32));
+    return uint(floor(position.x / 32)	      +
+		position.y * n_cells_per_row  +
+		position.z * pow(n_cells_per_row, 2));
+}
+
 bool isAlive()
 {
-    return ((uint(world_cells[uint(floor((  (gl_GlobalInvocationID.x +
-				     gl_GlobalInvocationID.y * map_size +
-				     gl_GlobalInvocationID.z * pow(map_size, 2)) / 32)))])
+    return ((uint(world_cells[getCellPos(gl_GlobalInvocationID)])
 	    & uint(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32)))) != uint(0));
 }
 
@@ -35,7 +41,7 @@ void main(void)
     {
 	if (isAlive())
 	{
-	    positions[atomicCounterIncrement(current_index)] = gl_GlobalInvocationID; 
+	    positions[atomicCounterIncrement(current_index)] = vec3(gl_GlobalInvocationID); 
 	}
     }
 }
