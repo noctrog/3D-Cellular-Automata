@@ -132,6 +132,7 @@ void  App::SDLinit()
 void  App::GLinit()
 {
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_GEQUAL);
     glViewport(0, 0, 1280, 720);
 }
 
@@ -234,8 +235,8 @@ void  App::render()
 {
     float background_color[] = { 0.5f + 0.1f*sin(currentTime), 0.0f, 0.5f, 1.0f }; 
     glClearBufferfv(GL_COLOR, 0, background_color);
-    static const float one = 1.0f;
-    glClearBufferfv(GL_DEPTH, 0, &one);
+    static const float zero = 0.0f;
+    glClearBufferfv(GL_DEPTH, 0, &zero);
 
     // Update VAO to read from the new positions buffer
     glBindVertexArray(cubes_vao);
@@ -270,6 +271,8 @@ void  App::run()
 
 		    if (e.key.keysym.sym == SDLK_a)	  cam_angle -= 0.1f;
 		    if (e.key.keysym.sym == SDLK_d)	  cam_angle += 0.1f;
+		    if (e.key.keysym.sym == SDLK_w)	  view_distance -= 5.0f;
+		    if (e.key.keysym.sym == SDLK_s)	  view_distance += 5.0f;
 		break;
 	    }
 	}
@@ -340,6 +343,7 @@ void  App::run()
 	    glCreateBuffers(1, &positions_buffer);
 	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
 	    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GL_FLOAT) * alive_cells, nullptr, GL_DYNAMIC_DRAW);
+	    glInvalidateBufferData(GL_ARRAY_BUFFER);
 
 	    // Bind positions buffer to the shader
 	    glBindBuffer(GL_SHADER_STORAGE_BUFFER, positions_buffer);
@@ -355,12 +359,12 @@ void  App::run()
 
 	    glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
 
+	    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
 	    b_run_single_epoch = false;
 
-
-
 	    float* tmp = (float*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-	    *tmp = 7.0f; *(tmp + 1) = 7.0f; *(tmp + 2) = 7.0f;
+	    //*tmp = 7.0f; *(tmp + 1) = 7.0f; *(tmp + 2) = 7.0f;
 	    for (size_t i = 0; i < alive_cells; ++i){
 		std::cout << "Nueva pos: " << *(tmp++) << ", " << *(tmp++) << ", " << *(tmp++) << std::endl;
 	    }

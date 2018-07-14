@@ -30,7 +30,6 @@ uint  getCellPos(uvec3 position)
 
 bool  getCell(uvec3 position)
 {
-
     return bool(
 	world_cells[getCellPos(position)] & uint(uint(1) << (uint(31) - uint(mod(position.x, 32))))
     );
