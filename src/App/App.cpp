@@ -9,6 +9,8 @@
 #include <sstream>
 #include <cmath>
 
+#include <bitset>
+
 App::App()
 {
     proj_matrix = glm::perspective(70.0f, 1920.0f / 1080.0f, 0.1f, 100.0f);
@@ -52,9 +54,23 @@ void  App::parseFile(std::ifstream& file)
     }
     else
     {
-	// Generate initial world
-	auto init_world = std::make_unique<world_unit[]>(std::pow(world_size, 2) *
-						    std::ceil(static_cast<float>(world_size) / 32.0f));
+	// Create world buffer
+	glCreateBuffers(2, map3D);
+	std::vector<uint32_t> init_world(std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 32.0f), 0);
+	for (int i = 0; i < 9; ++i) {
+	    std::cout << init_world[i];
+	}
+	std::cout << std::endl;
+
+	// Save the auxiliary map initialized to 0s
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[1]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER,
+		     init_world.size() * sizeof(uint32_t),
+		     init_world.data(),
+		     GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	uint32_t n_cells_per_row = std::ceil(static_cast<float>(world_size) / 32.0f);
 	std::vector<glm::vec3> initial_positions;
 	while (std::getline(file, currentLine))
 	{
@@ -65,14 +81,13 @@ void  App::parseFile(std::ifstream& file)
 
 	    // Save positions as floats for the positions buffer
 	    glm::vec3 current_pos_f (static_cast<float>(current_pos.x),
-					static_cast<float>(current_pos.y),
-					static_cast<float>(current_pos.z));
+				     static_cast<float>(current_pos.y),
+				     static_cast<float>(current_pos.z));
 	    initial_positions.push_back(current_pos_f);
 
-	    uint32_t n_cells_per_row = std::ceil(static_cast<float>(world_size) / 32.0f);
 	    init_world[	std::floor(current_pos_f.x / 32.0f)	    + 
 			n_cells_per_row * current_pos.y		    +
-			std::pow(n_cells_per_row, 2) * current_pos.z].cells |= (1 << (31 - current_pos.x % 32));
+			std::pow(n_cells_per_row, 2) * current_pos.z] |= (1 << (31 - current_pos.x % 32));
 
 	    std::cout << "X: " << initial_positions.back().x << 
 			" Y: " << initial_positions.back().y <<
@@ -89,20 +104,29 @@ void  App::parseFile(std::ifstream& file)
 		     GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// Create world buffer
-	glCreateBuffers(2, map3D);
+	// Save initial map in GPU
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[0]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
-		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size)),
-		     init_world.get(),
-		     GL_DYNAMIC_DRAW);
-
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[1]);
-	glBufferData(GL_SHADER_STORAGE_BUFFER,
-		     std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size)),
-		     nullptr,
+		     init_world.size() * sizeof(uint32_t),
+		     init_world.data(),
 		     GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+	// Print ouput_map buffer
+	uint32_t* tmp = (uint32_t*) glMapNamedBuffer(map3D[0], GL_READ_ONLY);
+	for (size_t i = 0; i < world_size; ++i){
+	    for (size_t j = 0; j < world_size; ++j){
+		for (size_t k = 0; k < std::ceil(static_cast<float>(world_size) / 32.0f); ++k){
+		    std::cout << std::bitset<32>(*(tmp++)) << " ";
+		}
+		std::cout << std::endl;
+	    }
+	    std::cout << std::endl << std::endl;
+	}
+
+	glUnmapNamedBuffer(map3D[0]);
+
     }
 }
 
@@ -334,6 +358,20 @@ void  App::run()
 	    //std::cout << "OpenGL error: " << glGetError() << std::endl;
 	    std::cout << "Cells: " << alive_cells << std::endl;
 
+	    // Print ouput_map buffer
+	    uint32_t* tmp = (uint32_t*) glMapNamedBuffer(output_world, GL_READ_ONLY);
+	    for (size_t i = 0; i < world_size; ++i){
+		for (size_t j = 0; j < world_size; ++j){
+		    for (size_t k = 0; k < std::ceil(static_cast<float>(world_size) / 32.0f); ++k){
+			std::cout << std::bitset<32>(*(tmp++)) << " ";
+		    }
+		    std::cout << std::endl;
+		}
+		std::cout << std::endl << std::endl;
+	    }
+
+	    glUnmapNamedBuffer(output_world);
+
 	    /*
 	     *Second stage
 	     *Re allocate positions_buffer and from the new world generated,
@@ -371,12 +409,12 @@ void  App::run()
 
 	    b_run_single_epoch = false;
 
-	    float* tmp = (float*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-	    //*tmp = 7.0f; *(tmp + 1) = 7.0f; *(tmp + 2) = 7.0f;
-	    for (size_t i = 0; i < alive_cells; ++i){
-		std::cout << "Nueva pos: " << *(tmp++) << ", " << *(tmp++) << ", " << *(tmp++) << std::endl;
-	    }
-	    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	    //float* tmp = (float*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+	    ///[>tmp = 7.0f; *(tmp + 1) = 7.0f; *(tmp + 2) = 7.0f;
+	    //for (size_t i = 0; i < alive_cells; ++i){
+		//std::cout << "Nueva pos: " << *(tmp++) << ", " << *(tmp++) << ", " << *(tmp++) << std::endl;
+	    //}
+	    //glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 	}
 	
         view_matrix = glm::lookAt(glm::vec3(view_distance * cos(cam_angle), 0.0f, view_distance * sin(cam_angle)),
