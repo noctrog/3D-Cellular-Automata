@@ -29,7 +29,7 @@ namespace sdl2
 // alive (true, 1) or dead (false, 0);
 struct world_unit
 {
-    uint8_t cells;
+    uint32_t cells;
 };
 
 // To store the next number of alive cells
