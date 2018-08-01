@@ -57,10 +57,6 @@ void  App::parseFile(std::ifstream& file)
 	// Create world buffer
 	glCreateBuffers(2, map3D);
 	std::vector<uint32_t> init_world(std::pow(world_size, 2) * std::ceil(static_cast<float>(world_size) / 32.0f), 0);
-	for (int i = 0; i < 9; ++i) {
-	    std::cout << init_world[i];
-	}
-	std::cout << std::endl;
 
 	// Save the auxiliary map initialized to 0s
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, map3D[1]);
@@ -87,7 +83,7 @@ void  App::parseFile(std::ifstream& file)
 
 	    init_world[	std::floor(current_pos_f.x / 32.0f)	    + 
 			n_cells_per_row * current_pos.y		    +
-			std::pow(n_cells_per_row, 2) * current_pos.z] |= (1 << (31 - current_pos.x % 32));
+			world_size * std::pow(n_cells_per_row, 2) * current_pos.z] |= (1 << (31 - current_pos.x % 32));
 
 	    std::cout << "X: " << initial_positions.back().x << 
 			" Y: " << initial_positions.back().y <<
