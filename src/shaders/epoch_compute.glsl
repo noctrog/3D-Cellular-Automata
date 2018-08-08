@@ -25,13 +25,13 @@ uint  getCellPos(uvec3 position)
     uint n_cells_per_row = uint(ceil(map_size / 32));
     return uint(floor(position.x / 32)	      +
 		position.y * n_cells_per_row  +
-		position.z * pow(n_cells_per_row, 2));
+		map_size * position.z * n_cells_per_row);
 }
 
 bool  getCell(uvec3 position)
 {
     return bool(
-	world_cells[getCellPos(position)] & uint(uint(1) << (uint(31) - uint(mod(position.x, 32))))
+	world_cells[getCellPos(position)] & int(uint(1) << (uint(31) - uint(mod(position.x, 32))))
     );
 }
 

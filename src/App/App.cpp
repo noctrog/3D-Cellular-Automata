@@ -63,7 +63,7 @@ void  App::parseFile(std::ifstream& file)
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
 		     init_world.size() * sizeof(uint32_t),
 		     init_world.data(),
-		     GL_DYNAMIC_DRAW);
+		     GL_DYNAMIC_COPY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	uint32_t n_cells_per_row = std::ceil(static_cast<float>(world_size) / 32.0f);
@@ -83,7 +83,7 @@ void  App::parseFile(std::ifstream& file)
 
 	    init_world[	std::floor(current_pos_f.x / 32.0f)	    + 
 			n_cells_per_row * current_pos.y		    +
-			world_size * std::pow(n_cells_per_row, 2) * current_pos.z] |= (1 << (31 - current_pos.x % 32));
+			world_size * n_cells_per_row * current_pos.z] |= (1 << (31 - current_pos.x % 32));
 
 	    std::cout << "X: " << initial_positions.back().x << 
 			" Y: " << initial_positions.back().y <<
@@ -97,7 +97,7 @@ void  App::parseFile(std::ifstream& file)
 	glBufferData(GL_ARRAY_BUFFER, 
 		     sizeof(glm::vec3) * initial_positions.size(),
 		     glm::value_ptr(initial_positions[0]),
-		     GL_DYNAMIC_DRAW);
+		     GL_DYNAMIC_COPY);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Save initial map in GPU
@@ -105,11 +105,12 @@ void  App::parseFile(std::ifstream& file)
 	glBufferData(GL_SHADER_STORAGE_BUFFER,
 		     init_world.size() * sizeof(uint32_t),
 		     init_world.data(),
-		     GL_DYNAMIC_DRAW);
+		     GL_DYNAMIC_COPY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
 	// Print ouput_map buffer
+	std::cout << "--- map3D[0] ---" << std::endl;
 	uint32_t* tmp = (uint32_t*) glMapNamedBuffer(map3D[0], GL_READ_ONLY);
 	for (size_t i = 0; i < world_size; ++i){
 	    for (size_t j = 0; j < world_size; ++j){
@@ -120,9 +121,20 @@ void  App::parseFile(std::ifstream& file)
 	    }
 	    std::cout << std::endl << std::endl;
 	}
-
 	glUnmapNamedBuffer(map3D[0]);
 
+	std::cout << "--- map3D[1] ---" << std::endl;
+	tmp = (uint32_t*) glMapNamedBuffer(map3D[1], GL_READ_ONLY);
+	for (size_t i = 0; i < world_size; ++i){
+	    for (size_t j = 0; j < world_size; ++j){
+		for (size_t k = 0; k < n_cells_per_row; ++k){
+		    std::cout << std::bitset<32>(*(tmp++)) << " ";
+		}
+		std::cout << std::endl;
+	    }
+	    std::cout << std::endl << std::endl;
+	}
+	glUnmapNamedBuffer(map3D[1]);
     }
 }
 
@@ -355,6 +367,7 @@ void  App::run()
 	    std::cout << "Cells: " << alive_cells << std::endl;
 
 	    // Print ouput_map buffer
+	    std::cout << "--- Output world ---" << std::endl;
 	    uint32_t* tmp = (uint32_t*) glMapNamedBuffer(output_world, GL_READ_ONLY);
 	    for (size_t i = 0; i < world_size; ++i){
 		for (size_t j = 0; j < world_size; ++j){
@@ -365,16 +378,26 @@ void  App::run()
 		}
 		std::cout << std::endl << std::endl;
 	    }
-
 	    glUnmapNamedBuffer(output_world);
 
+	    // Print aux map 
+	    std::cout << "--- Auxiliary world ---" << std::endl;
+	    tmp = (uint32_t*) glMapNamedBuffer(input_world, GL_READ_ONLY);
+	    for (size_t i = 0; i < world_size; ++i){
+		for (size_t j = 0; j < world_size; ++j){
+		    for (size_t k = 0; k < std::ceil(static_cast<float>(world_size) / 32.0f); ++k){
+			std::cout << std::bitset<32>(*(tmp++)) << " ";
+		    }
+		    std::cout << std::endl;
+		}
+		std::cout << std::endl << std::endl;
+	    }
+	    glUnmapNamedBuffer(input_world);
 	    /*
-	     *Second stage
-	     *Re allocate positions_buffer and from the new world generated,
-	     *fill the new positions_buffer (needed by glDrawInstanced)
+	     *	Second stage
+	     *	Reallocate positions_buffer and from the new world generated,
+	     *	fill the new positions_buffer (needed by glDrawInstanced)
 	     */
-
-	    gen_pos_buf_compute->use();
 
 	    // Bind map
 	    glBindBuffer(GL_SHADER_STORAGE_BUFFER, output_world);
@@ -384,7 +407,7 @@ void  App::run()
 	    glDeleteBuffers(1, &positions_buffer);
 	    glCreateBuffers(1, &positions_buffer);
 	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
-	    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GL_FLOAT) * alive_cells, nullptr, GL_DYNAMIC_DRAW);
+	    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GL_FLOAT) * alive_cells, nullptr, GL_DYNAMIC_COPY);
 	    glInvalidateBufferData(GL_ARRAY_BUFFER);
 
 	    // Bind positions buffer to the shader
@@ -395,6 +418,8 @@ void  App::run()
 	    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, alive_cells_atc);
 	    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
 	    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, input_world);
+
+	    gen_pos_buf_compute->use();
 
 	    // Set the map size
 	    glUniform1ui(0, world_size);	    
