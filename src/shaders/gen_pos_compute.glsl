@@ -28,9 +28,9 @@ uint  getCellPos(uvec3 position)
 
 bool isAlive()
 {
-    //return ((uint(world_cells[getCellPos(gl_GlobalInvocationID)])
-	    //& uint(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32)))) != uint(0));
-    return true;
+    return ((uint(world_cells[getCellPos(gl_GlobalInvocationID)])
+	    & uint(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32)))) != uint(0));
+    //return true;
 }
 
 void main(void)
@@ -42,6 +42,7 @@ void main(void)
 	if (isAlive())
 	{
 	    positions[atomicCounterIncrement(current_index)] = vec3(gl_GlobalInvocationID); 
+	    //positions[0] = vec3(1, 1, 1);
 	}
     }
 }

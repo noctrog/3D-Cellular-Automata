@@ -9,12 +9,12 @@ layout (location = 1) uniform uvec4 rule;
 
 layout (binding = 0, std430) readonly buffer map3D_in
 {
-    uint world_cells[];       
+    uint in_world_cells[];       
 };
     
 layout (binding = 1, std430) buffer map3D_out
 {
-    uint aux_world_cells[];
+    uint out_world_cells[];
 };
 
 // Add atomic counter
@@ -31,7 +31,7 @@ uint  getCellPos(uvec3 position)
 bool  getCell(uvec3 position)
 {
     return bool(
-	world_cells[getCellPos(position)] & int(uint(1) << (uint(31) - uint(mod(position.x, 32))))
+	in_world_cells[getCellPos(position)] & int(uint(1) << (uint(31) - uint(mod(position.x, 32))))
     );
 }
 
@@ -58,33 +58,31 @@ uint numNeighbours()
     return num_nb;
 }
 
-bool evolve()
+void evolve()
 {
     uint num_nb = numNeighbours();
     if (getCell(gl_GlobalInvocationID))
     {
 	if (num_nb <= rule.x || num_nb >= rule.y){
-	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] &=
+	    out_world_cells[getCellPos(gl_GlobalInvocationID)] &=
 				~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
-	    return false;
 	}
 	else{
-	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] |=
+	    out_world_cells[getCellPos(gl_GlobalInvocationID)] |=
 				(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
-	    return true;
+	    atomicCounterIncrement(alive_cells);
 	}
     }
     else
     {
 	if (num_nb >= rule.z || num_nb <= rule.a){
-	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] |=
+	    out_world_cells[getCellPos(gl_GlobalInvocationID)] |=
 				(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
-	    return true;
+	    atomicCounterIncrement(alive_cells);
 	}
 	else{
-	    aux_world_cells[getCellPos(gl_GlobalInvocationID)] &=
+	    out_world_cells[getCellPos(gl_GlobalInvocationID)] &=
 				~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
-	    return false;
 	}
     }
 }
@@ -97,7 +95,7 @@ void main(void)
 	gl_GlobalInvocationID.y < map_size &&
 	gl_GlobalInvocationID.z < map_size)
     {
-	if (evolve())	atomicCounterIncrement(alive_cells);	
+	evolve();	
     }
 }
 

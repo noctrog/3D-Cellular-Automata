@@ -404,11 +404,15 @@ void  App::run()
 	    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, output_world);
 
 	    // Create new positions buffer
+	    std::vector<GLfloat> zeros(alive_cells * 3, 0.0f);
 	    glDeleteBuffers(1, &positions_buffer);
 	    glCreateBuffers(1, &positions_buffer);
 	    glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
-	    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GL_FLOAT) * alive_cells, nullptr, GL_DYNAMIC_COPY);
-	    glInvalidateBufferData(GL_ARRAY_BUFFER);
+	    glBufferData(GL_ARRAY_BUFFER, 
+			 3 * sizeof(GL_FLOAT) * alive_cells,
+			 zeros.data(), 
+			 GL_DYNAMIC_COPY);
+	    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	    // Bind positions buffer to the shader
 	    glBindBuffer(GL_SHADER_STORAGE_BUFFER, positions_buffer);
