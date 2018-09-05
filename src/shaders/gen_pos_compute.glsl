@@ -28,9 +28,9 @@ uint  getCellPos(uvec3 position)
 
 bool isAlive()
 {
-    return ((uint(world_cells[getCellPos(gl_GlobalInvocationID)])
-	    & uint(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32)))) != uint(0));
-    //return true;
+    //return ((uint(world_cells[getCellPos(gl_GlobalInvocationID)])
+	    //& uint(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32)))) != uint(0));
+    return false;
 }
 
 void main(void)

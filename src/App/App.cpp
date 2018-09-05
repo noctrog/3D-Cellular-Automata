@@ -11,6 +11,21 @@
 
 #include <bitset>
 
+#include <stdio.h>
+static void APIENTRY simple_print_callback( GLenum source,
+					    GLenum type,
+					    GLuint id,
+					    GLenum severity,
+					    GLsizei length,
+					    const GLchar* message,
+					    const void* userParam)
+{
+    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+	printf( "Debug message with source 0x%04X, type 0x%04X, "
+		"id %u, severity 0x%0X, `%s`\n",
+		source, type, id, severity, message);
+}
+
 App::App()
 {
     proj_matrix = glm::perspective(70.0f, 1920.0f / 1080.0f, 0.1f, 100.0f);
@@ -150,6 +165,7 @@ void  App::SDLinit()
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
  
@@ -174,6 +190,8 @@ void  App::GLinit()
     glEnable(GL_LINE_SMOOTH);
 
     //glEnable(GL_MULTISAMPLE);
+    //
+    glDebugMessageCallback(&simple_print_callback, NULL);
 }
 
 void  App::setup()
@@ -376,7 +394,7 @@ void  App::run()
 		    }
 		    std::cout << std::endl;
 		}
-		std::cout << std::endl << std::endl;
+		std::cout << std::endl;
 	    }
 	    glUnmapNamedBuffer(output_world);
 
@@ -390,7 +408,7 @@ void  App::run()
 		    }
 		    std::cout << std::endl;
 		}
-		std::cout << std::endl << std::endl;
+		std::cout << std::endl;
 	    }
 	    glUnmapNamedBuffer(input_world);
 	    /*
@@ -428,7 +446,7 @@ void  App::run()
 	    // Set the map size
 	    glUniform1ui(0, world_size);	    
 
-	    glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
+	    //glDispatchCompute(numWorkGroups, numWorkGroups, numWorkGroups);
 
 	    glMemoryBarrier(GL_ALL_BARRIER_BITS);
 

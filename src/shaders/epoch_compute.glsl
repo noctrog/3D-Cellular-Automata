@@ -35,6 +35,26 @@ bool  getCell(uvec3 position)
     );
 }
 
+bool survives(uint num_nb)
+{
+    if (num_nb >= rule.x && num_nb <= rule.y)
+	return true;
+    else
+	return false;
+}
+
+bool dies(uint num_nb)
+{
+    return (!survives(num_nb));
+}
+
+bool is_born(uint num_nb)
+{
+    if (num_nb >= rule.z && num_nb <= rule.a)
+	return true;
+    else
+	return false;
+}
 
 uint numNeighbours()
 {
@@ -63,19 +83,19 @@ void evolve()
     uint num_nb = numNeighbours();
     if (getCell(gl_GlobalInvocationID))
     {
-	if (num_nb <= rule.x || num_nb >= rule.y){
-	    out_world_cells[getCellPos(gl_GlobalInvocationID)] &=
-				~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
-	}
-	else{
+	if (survives(num_nb)){
 	    out_world_cells[getCellPos(gl_GlobalInvocationID)] |=
 				(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
 	    atomicCounterIncrement(alive_cells);
 	}
+	else{
+	    out_world_cells[getCellPos(gl_GlobalInvocationID)] &=
+				~(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
+	}
     }
     else
     {
-	if (num_nb >= rule.z || num_nb <= rule.a){
+	if (is_born(num_nb)){
 	    out_world_cells[getCellPos(gl_GlobalInvocationID)] |=
 				(uint(1) << uint(31 - mod(gl_GlobalInvocationID.x, 32.0f)));
 	    atomicCounterIncrement(alive_cells);
