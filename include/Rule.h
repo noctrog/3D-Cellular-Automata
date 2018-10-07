@@ -21,6 +21,9 @@ public:
     uint32_t		    get_max_survive();
     uint32_t		    get_min_born();
     uint32_t		    get_max_born();
+
+    bool		    survives(size_t num_nb);
+    bool		    is_born(size_t num_nb);
     
     std::array<uint32_t, 4> get_rule();
     std::string		    get_rule_str();

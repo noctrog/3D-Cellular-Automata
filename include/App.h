@@ -10,7 +10,7 @@
 
 #include <glm/glm.hpp>
 #include <Shader.h>
-#include <Rule.h>
+#include <World3d.h>
 
 namespace sdl2
 {
@@ -23,20 +23,6 @@ namespace sdl2
     using WindowPtr = std::unique_ptr<SDL_Window, SDL_Deleter>;
     using GLContextPtr = std::unique_ptr<SDL_GLContext, SDL_Deleter>;
 }
-
-// Each World Unit will contain 8 cells
-// The value stored is if they are either 
-// alive (true, 1) or dead (false, 0);
-struct world_unit
-{
-    uint32_t cells;
-};
-
-// To store the next number of alive cells
-struct uint_ssbo
-{
-    uint32_t cell_count;
-};
 
 class App
 {
@@ -80,15 +66,8 @@ private:
     bool		      b_auto_epoch;
     float		      auto_epoch_rate;
 
-    /* ---  File objects  --- */
-    //std::fstream mapFile;
-    void	  parseFile(std::ifstream& file);
-
-    /* ---	World	  --- */
-    uint32_t		      world_size;
-    Rule		      world_rule;
-    uint32_t		      alive_cells;
-    bool		      even_epoch;
+    /* --- World --- */
+    World3d the_world;
 
     /* --- OpenGL objects --- */
     std::unique_ptr<Shader>   rendering_program;
@@ -97,17 +76,12 @@ private:
 
     float		      cam_angle;
 
-    std::unique_ptr<Shader>   pass_epoch_compute;
-    std::unique_ptr<Shader>   gen_pos_buf_compute;
     GLuint		      positions_buffer;
 
-    GLuint		      map3D[2];
-    GLuint		      alive_cells_atc;
-
+    /* --- Camera properties --- */
     glm::mat4		      world_matrix;
     float		      view_distance;
     glm::mat4		      view_matrix;
     glm::mat4		      proj_matrix;
     GLuint		      mvp_location;    
-
 };

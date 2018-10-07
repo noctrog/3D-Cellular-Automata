@@ -4,7 +4,6 @@ using namespace std;
 
 #include <iostream>
 #include <fstream>
-#include "utils.h"
 
 class World
 {

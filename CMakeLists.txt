@@ -24,8 +24,12 @@ add_library(Rule
 add_library(App
 	    src/App/App.cpp
 	    src/App/gl3w.c)
+add_library(World
+	    src/world/world.cpp)
+add_library(World3d
+	    src/world3d/world3d.cpp)
 
-target_link_libraries(App Shader Rule)
+target_link_libraries(App Shader Rule World World3d)
 
 set(RUN_DIR ${CMAKE_SOURCE_DIR}/bin)
 
