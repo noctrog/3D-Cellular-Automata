@@ -20,10 +20,17 @@ World3d::~World3d()
 void World3d::reset_world()
 {
     world.resize(size);
+    for (size_t i = 0; i < size; ++i) {
+        world.at(i).resize(size);
+	for (size_t j = 0; j < size; ++j) {
+	    world.at(i).at(j).resize(size, 0);
+	}
+    }
+    world.resize(size);
     for (auto y : world){
 	y.resize(size);
 	for(auto x : y){
-	    x.resize(size, false);
+	    x.resize(size, 0);
 	}
     }
 
@@ -31,7 +38,7 @@ void World3d::reset_world()
     for (auto y : aux_world){
 	y.resize(size);
 	for(auto x : y){
-	    x.resize(size, false);
+	    x.resize(size, 0);
 	}
     }
 }
@@ -119,13 +126,15 @@ void World3d::read_from(std::ifstream& ifs)
 	    size_t x, y, z;
 	    std::stringstream ss(current_line);
 	    if (!(ss >> x >> y >> z))		      break;
-	    if (!(x < size && y < size && z < size))  break;
+	    if ((x < size && y < size && z < size))
+	    {
+		world[z][y][x] = true;
+		positions_buffer.push_back({{static_cast<float>(x),
+			static_cast<float>(y),
+			static_cast<float>(z)}});
+		nbeings++;
+	    }
 
-	    world[z][y][x] = true;
-	    positions_buffer.push_back({{static_cast<float>(x),
-					static_cast<float>(y),
-					static_cast<float>(z)}});
-	    nbeings++;
 	}
     }
 }

@@ -74,7 +74,6 @@ void  App::GLinit()
     glEnable(GL_LINE_SMOOTH);
 
     //glEnable(GL_MULTISAMPLE);
-    //
     glDebugMessageCallback(&simple_print_callback, NULL);
 }
 
