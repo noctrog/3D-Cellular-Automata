@@ -10,7 +10,7 @@
 
 #include <glm/glm.hpp>
 #include <Shader.h>
-#include <World3d.h>
+#include <world3d.h>
 
 namespace sdl2
 {
@@ -27,7 +27,6 @@ namespace sdl2
 class App
 {
 public:
-    App ();
     App (const std::string& _mapFilePath);
     virtual ~App ();
 

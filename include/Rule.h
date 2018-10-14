@@ -14,7 +14,7 @@ class Rule
 {
 public:
     Rule ();
-    Rule (std::string& rule_str);
+    Rule (const std::string& rule_str);
     virtual		    ~Rule ();
 
     uint32_t		    get_min_survive();

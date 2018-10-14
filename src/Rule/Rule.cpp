@@ -17,7 +17,7 @@ Rule::Rule()
 
 }
 
-Rule::Rule(std::string& _rule_str)
+Rule::Rule(const std::string& _rule_str)
 {
     set_rule(_rule_str);
 }
@@ -46,6 +46,30 @@ uint32_t      Rule::get_min_born()
 uint32_t      Rule::get_max_born()
 {
     return the_rule[3];
+}
+
+bool	      Rule::survives(size_t num_nb)
+{
+    if (num_nb >= get_min_survive() && num_nb <= get_max_survive())
+    {
+	return true;
+    }
+    else
+    {
+	return false;
+    }
+}
+
+bool	      Rule::is_born(size_t num_nb)
+{
+    if (num_nb >= get_min_born() && num_nb <= get_max_born())
+    {
+	return true;
+    }
+    else
+    {
+	return false;
+    }
 }
 
 std::string Rule::get_rule_str()

@@ -26,15 +26,8 @@ static void APIENTRY simple_print_callback( GLenum source,
 		source, type, id, severity, message);
 }
 
-App::App()
-{
-    proj_matrix = glm::perspective(70.0f, 1920.0f / 1080.0f, 0.1f, 100.0f);
-
-    setup();
-}
-
 App::App(const std::string& _map_file_path) 
-    : the_world(_map_file_path), b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), cam_angle(0), even_epoch(false)
+    : the_world(_map_file_path), b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), cam_angle(0)
 {
     // Setup SDL2 and OpenGL
     setup();
@@ -96,7 +89,7 @@ void  App::setup()
 void  App::startup()
 {
     proj_matrix	      = glm::perspective(70.0f, 1200.0f/720.0f, 100.0f, 0.1f);
-    float dist	      = static_cast<float>(world_size);
+    float dist	      = static_cast<float>(the_world.get_size());
     world_matrix      = glm::translate(glm::mat4(1.0f), glm::vec3(-dist/2.0f));
     view_distance     = dist;
     view_matrix	      = glm::lookAt(glm::vec3(view_distance * cos(cam_angle),
@@ -202,7 +195,7 @@ void  App::render()
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, alive_cells);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, the_world.num_beings());
 }
 
 void  App::run()
@@ -255,7 +248,6 @@ void  App::shutdown()
 {
     glDeleteBuffers(1, &instance_cube_vertices);
     glDeleteBuffers(1, &positions_buffer);
-    glDeleteBuffers(2, map3D);
     glDeleteVertexArrays(1, &cubes_vao);
 }
 

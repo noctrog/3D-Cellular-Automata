@@ -1,4 +1,5 @@
 #include <world3d.h>
+#include <sstream>
 
 World3d::World3d(const std::string& r, size_t _size)
     : World(), size(_size), the_rule(r)
@@ -18,17 +19,17 @@ World3d::~World3d()
 
 void World3d::reset_world()
 {
-    world.resize(size, false);
+    world.resize(size);
     for (auto y : world){
-	y.resize(size, false);
+	y.resize(size);
 	for(auto x : y){
 	    x.resize(size, false);
 	}
     }
 
-    aux_world.resize(size, false);
+    aux_world.resize(size);
     for (auto y : aux_world){
-	y.resize(size, false);
+	y.resize(size);
 	for(auto x : y){
 	    x.resize(size, false);
 	}
@@ -38,11 +39,11 @@ void World3d::reset_world()
 bool World3d::insert_cell_at(size_t x, size_t y, size_t z)
 {
     if (x < size && y < size && z < size){
-	aux_world[k][j][i] = true;
+	aux_world[z][y][x] = true;
 	positions_buffer.push_back({{static_cast<float>(x),
 				     static_cast<float>(y),
 				     static_cast<float>(z)}});
-	num_beings++;
+	nbeings++;
 	return true;
     }
     else {
@@ -64,7 +65,7 @@ size_t World3d::get_size()
 
 std::string World3d::to_string()
 {
-    std::ostringstream ss;
+    std::stringstream ss;
 
     for (auto z : world){
 	for (auto y : z){
@@ -92,7 +93,7 @@ void World3d::read_from(std::ifstream& ifs)
     // load rule
     std::string rule_string;
     std::getline(ifs, rule_string);
-    rule_string = rule_string.sub(6, 4);
+    rule_string = rule_string.substr(6, 4);
     the_rule.set_rule(rule_string);   
 
     // get world size
@@ -131,14 +132,14 @@ void World3d::read_from(std::ifstream& ifs)
 
 void World3d::evolve()
 {
-    num_beings = 0;
+    nbeings = 0;
 
     for (int i = 0; i < size; ++i){
 	for (int j = 0; j < size; ++j){
 	    for (int k = 0; k < size; ++k){
-		uint8_t num_nb = get_num_nb();
-		if (get_cell_at[k][j][i]){
-		    if (the_rule.survives()){
+		uint8_t num_nb = get_num_nb(i, j, k);
+		if (world[k][j][i]){
+		    if (the_rule.survives(num_nb)){
 			insert_cell_at(k, j, i);
 		    }
 		    else {
@@ -162,10 +163,32 @@ void World3d::evolve()
 
 float* World3d::get_positions_buffer()
 {
-    return positions_buffer.data();
+    return positions_buffer.at(0).data();
 }
 
 size_t World3d::get_positions_buffer_size()
 {
     return (3 * sizeof(float) * positions_buffer.size());
+}
+
+size_t World3d::get_num_nb(int x, int y, int z)
+{
+    size_t cnt = 0;
+
+    for (int i = -1; i < 2; ++i){
+	for (int j = -1; j < 2; ++j){
+	    for (int k = -1; k < 2; ++k){
+		if (i && j && k &&
+		    z+k < size && z+k >=0 &&
+		    y+j < size && y+j >=0 &&
+		    x+i < size && x+i >=0 &&
+		    get_cell_at(x+i, y+j, z+k)){
+		    
+		    cnt++;
+		}
+	    }
+	}
+    }
+
+    return cnt;
 }

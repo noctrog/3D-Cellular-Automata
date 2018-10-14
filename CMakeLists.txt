@@ -13,7 +13,7 @@ find_package( OpenGL )
 set (CMAKE_DEBUG_POSTFIX "_d")
 
 find_package(PkgConfig REQUIRED)
-set(COMMON_LIBS X11 Xrandr Xinerama Xi Xxf86vm Xcursor GL rt dl SDL2 Shader Rule App )
+set(COMMON_LIBS X11 Xrandr Xinerama Xi Xxf86vm Xcursor GL rt dl SDL2 Shader World World3d Rule App )
 
 set(COMMON_LIBS ${COMMON_LIBS} ${EXTRA_LIBS})
 
@@ -30,6 +30,7 @@ add_library(World3d
 	    src/world3d/world3d.cpp)
 
 target_link_libraries(App Shader Rule World World3d)
+target_link_libraries(World3d Rule)
 
 set(RUN_DIR ${CMAKE_SOURCE_DIR}/bin)
 

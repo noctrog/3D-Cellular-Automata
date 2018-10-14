@@ -1,0 +1,105 @@
+[
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-I/home/ramon/Documents/Programming/3D-Cellular-Automata/include",
+            "-D_LINUX",
+            "-std=c++14",
+            "-g",
+            "-o",
+            "CMakeFiles/World.dir/src/world/world.cpp.o",
+            "../src/world/world.cpp"
+        ],
+        "directory": "/home/ramon/Documents/Programming/3D-Cellular-Automata/build",
+        "file": "../src/world/world.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-I/home/ramon/Documents/Programming/3D-Cellular-Automata/include",
+            "-D_LINUX",
+            "-std=c++14",
+            "-g",
+            "-o",
+            "CMakeFiles/3D_Cellular_Automata.dir/src/3D_Cellular_Automata.cpp.o",
+            "../src/3D_Cellular_Automata.cpp"
+        ],
+        "directory": "/home/ramon/Documents/Programming/3D-Cellular-Automata/build",
+        "file": "../src/3D_Cellular_Automata.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-I/home/ramon/Documents/Programming/3D-Cellular-Automata/include",
+            "-D_LINUX",
+            "-std=c++14",
+            "-g",
+            "-o",
+            "CMakeFiles/Shader.dir/src/Shader/Shader.cpp.o",
+            "../src/Shader/Shader.cpp"
+        ],
+        "directory": "/home/ramon/Documents/Programming/3D-Cellular-Automata/build",
+        "file": "../src/Shader/Shader.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-I/home/ramon/Documents/Programming/3D-Cellular-Automata/include",
+            "-D_LINUX",
+            "-std=c++14",
+            "-g",
+            "-o",
+            "CMakeFiles/World3d.dir/src/world3d/world3d.cpp.o",
+            "../src/world3d/world3d.cpp"
+        ],
+        "directory": "/home/ramon/Documents/Programming/3D-Cellular-Automata/build",
+        "file": "../src/world3d/world3d.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-I/home/ramon/Documents/Programming/3D-Cellular-Automata/include",
+            "-D_LINUX",
+            "-std=c++14",
+            "-g",
+            "-o",
+            "CMakeFiles/App.dir/src/App/App.cpp.o",
+            "../src/App/App.cpp"
+        ],
+        "directory": "/home/ramon/Documents/Programming/3D-Cellular-Automata/build",
+        "file": "../src/App/App.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-I/home/ramon/Documents/Programming/3D-Cellular-Automata/include",
+            "-D_LINUX",
+            "-std=c++14",
+            "-g",
+            "-o",
+            "CMakeFiles/Rule.dir/src/Rule/Rule.cpp.o",
+            "../src/Rule/Rule.cpp"
+        ],
+        "directory": "/home/ramon/Documents/Programming/3D-Cellular-Automata/build",
+        "file": "../src/Rule/Rule.cpp"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-I/home/ramon/Documents/Programming/3D-Cellular-Automata/include",
+            "-g",
+            "-o",
+            "CMakeFiles/App.dir/src/App/gl3w.c.o",
+            "../src/App/gl3w.c"
+        ],
+        "directory": "/home/ramon/Documents/Programming/3D-Cellular-Automata/build",
+        "file": "../src/App/gl3w.c"
+    }
+]
