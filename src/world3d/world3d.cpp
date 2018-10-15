@@ -26,21 +26,28 @@ void World3d::reset_world()
 	    world.at(i).at(j).resize(size, 0);
 	}
     }
-    world.resize(size);
-    for (auto y : world){
-	y.resize(size);
-	for(auto x : y){
-	    x.resize(size, 0);
-	}
-    }
-
     aux_world.resize(size);
-    for (auto y : aux_world){
-	y.resize(size);
-	for(auto x : y){
-	    x.resize(size, 0);
+    for (size_t i = 0; i < size; ++i) {
+	aux_world.at(i).resize(size);
+	for (size_t j = 0; j < size; ++j) {
+	    aux_world.at(i).at(j).resize(size, 0);
 	}
     }
+    //world.resize(size);
+    //for (auto y : world){
+	//y.resize(size);
+	//for(auto x : y){
+	    //x.resize(size, 0);
+	//}
+    //}
+
+    //aux_world.resize(size);
+    //for (auto y : aux_world){
+	//y.resize(size);
+	//for(auto x : y){
+	    //x.resize(size, 0);
+	//}
+    //}
 }
 
 bool World3d::insert_cell_at(size_t x, size_t y, size_t z)
