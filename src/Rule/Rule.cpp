@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include <iostream>
+#include <sstream>
 
 constexpr uint8_t max_nb = 3 * 3 * 3 - 1;
 
@@ -84,28 +85,19 @@ std::array<uint32_t, 4> Rule::get_rule()
 
 void	    Rule::set_rule(std::string rule_str)
 {
-    std::vector<uint8_t> rule_values;
-    std::string::size_type sz;
-    if (rule_str.length())		rule_values.push_back(std::stoi(rule_str, &sz));
-    if (rule_str.substr(sz).length())	rule_values.push_back(std::stoi(rule_str, &sz));
-    if (rule_str.substr(sz).length())	rule_values.push_back(std::stoi(rule_str, &sz));
-    if (rule_str.substr(sz).length())	rule_values.push_back(std::stoi(rule_str));
-
-    if (rule_values.size() != 4){
-	throw BadRuleException("Bad rule: size mismatch -> Rule string: " + rule_values[0]);
-    }
-    for (auto i = 0; i < 4; ++i){
-	if (rule_values[i] > max_nb)
-	    throw BadRuleException("Bad rule: value too large");
-    }
-    if (rule_values[0] > rule_values[1] || rule_values[2] > rule_values[3]){
-	throw BadRuleException("Bad rule: min value larger than max value");
-    }
-
     this->rule_str = rule_str;
 
-    the_rule[0]	= rule_values[0];
-    the_rule[1]	= rule_values[1];
-    the_rule[2]	= rule_values[2];
-    the_rule[3]	= rule_values[3];
+    std::stringstream ss;
+    ss.str(rule_str);
+    ss >> the_rule[0] >> the_rule[1] >> the_rule[2] >> the_rule[3];
+
+    //std::cout << the_rule[0] << " " << the_rule[1] << " " << the_rule[2] << " " << the_rule[3] << std::endl;
+    
+    if (the_rule[0] == 0 || the_rule[0] > max_nb ||
+	the_rule[1] == 0 || the_rule[1] > max_nb ||
+	the_rule[2] == 0 || the_rule[2] > max_nb ||
+	the_rule[3] == 0 || the_rule[3] > max_nb){
+	
+	throw BadRuleException("Wrong rule values");
+    }
 }

@@ -3,3 +3,4 @@ build/*
 bin/*
 !bin/DO_NOT_DELETE
 map.txt
+Session.vim

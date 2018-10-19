@@ -1,5 +1,6 @@
 #include <world3d.h>
 #include <sstream>
+#include <iostream>
 
 World3d::World3d(const std::string& r, size_t _size)
     : World(), size(_size), the_rule(r)
@@ -107,7 +108,7 @@ void World3d::read_from(std::ifstream& ifs)
     // load rule
     std::string rule_string;
     std::getline(ifs, rule_string);
-    rule_string = rule_string.substr(6, 4);
+    rule_string = rule_string.substr(6, std::string::npos);
     the_rule.set_rule(rule_string);   
 
     // get world size
@@ -143,12 +144,25 @@ void World3d::read_from(std::ifstream& ifs)
 	    }
 
 	}
+	for (int i = 0; i < positions_buffer.size(); i++){
+		std::cout << positions_buffer[i].at(0) << " ";
+		std::cout << positions_buffer[i].at(1) << " ";
+		std::cout << positions_buffer[i].at(2) << std::endl;
+	}
     }
 }
 
 void World3d::evolve()
 {
+    std::cout << "Antes de evolve" << std::endl;
+    for (int i = 0; i < positions_buffer.size(); i++){
+	std::cout << positions_buffer[i].at(0) << " ";
+	std::cout << positions_buffer[i].at(1) << " ";
+	std::cout << positions_buffer[i].at(2) << std::endl;
+    }
+
     nbeings = 0;
+    positions_buffer.clear();
 
     for (int i = 0; i < size; ++i){
 	for (int j = 0; j < size; ++j){
@@ -156,7 +170,7 @@ void World3d::evolve()
 		uint8_t num_nb = get_num_nb(i, j, k);
 		if (world[k][j][i]){
 		    if (the_rule.survives(num_nb)){
-			insert_cell_at(k, j, i);
+			insert_cell_at(i, j, k);
 		    }
 		    else {
 			aux_world[k][j][i] = false;
@@ -164,7 +178,7 @@ void World3d::evolve()
 		}
 		else{
 		    if (the_rule.is_born(num_nb)){
-			insert_cell_at(k, j, i);
+			insert_cell_at(i, j, k);
 		    }
 		    else {
 			aux_world[k][j][i] = false;
@@ -175,11 +189,20 @@ void World3d::evolve()
     }
 
     world.swap(aux_world);
+    std::cout << "Despues de evolve" << std::endl;
+    for (int i = 0; i < positions_buffer.size(); i++){
+	std::cout << positions_buffer[i].at(0) << " ";
+	std::cout << positions_buffer[i].at(1) << " ";
+	std::cout << positions_buffer[i].at(2) << std::endl;
+    }
 }
 
 float* World3d::get_positions_buffer()
 {
-    return positions_buffer.at(0).data();
+    if (positions_buffer.size() > 0)
+        return positions_buffer.at(0).data();
+    else
+	return nullptr;
 }
 
 size_t World3d::get_positions_buffer_size()

@@ -141,6 +141,10 @@ void  App::startup()
 	-0.5f,  0.5f, -0.5f
     };
 
+        // Create vertex array object for rendering the cubes 
+    glCreateVertexArrays(1, &cubes_vao);
+    glBindVertexArray(cubes_vao);
+    
     // Create positions buffer
     glCreateBuffers(1, &positions_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
@@ -150,10 +154,6 @@ void  App::startup()
 		 GL_DYNAMIC_COPY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // Create vertex array object for rendering the cubes 
-    glCreateVertexArrays(1, &cubes_vao);
-    glBindVertexArray(cubes_vao);
-    
     // Create buffer holding one cube's vertex
     glCreateBuffers(1, &instance_cube_vertices);
     glBindBuffer(GL_ARRAY_BUFFER, instance_cube_vertices);
@@ -186,6 +186,10 @@ void  App::render()
     // Update VAO to read from the new positions buffer
     glBindVertexArray(cubes_vao);
     glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
+    glBufferData(GL_ARRAY_BUFFER, 
+		 the_world.get_positions_buffer_size(),
+		 the_world.get_positions_buffer(),
+		 GL_DYNAMIC_COPY);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     rendering_program->use();
