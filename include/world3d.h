@@ -39,7 +39,7 @@ private:
     CellCube world;
     CellCube aux_world;
 
-    size_t size;
+    int size;
     Rule the_rule;
     
     using vector3 = std::array<float, 3>;

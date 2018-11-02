@@ -168,7 +168,7 @@ void World3d::evolve()
 	for (int j = 0; j < size; ++j){
 	    for (int k = 0; k < size; ++k){
 		uint8_t num_nb = get_num_nb(i, j, k);
-		if (world[k][j][i]){
+		if (get_cell_at(i, j, k)){
 		    if (the_rule.survives(num_nb)){
 			insert_cell_at(i, j, k);
 		    }
@@ -217,13 +217,13 @@ size_t World3d::get_num_nb(int x, int y, int z)
     for (int i = -1; i < 2; ++i){
 	for (int j = -1; j < 2; ++j){
 	    for (int k = -1; k < 2; ++k){
-		if (i && j && k &&
-		    z+k < size && z+k >=0 &&
-		    y+j < size && y+j >=0 &&
-		    x+i < size && x+i >=0 &&
-		    get_cell_at(x+i, y+j, z+k)){
-		    
-		    cnt++;
+		if (!((i == 0) && (j == 0) && (k == 0)) && 
+			 x+i >= 0 && x+i < size &&
+			 y+j >= 0 && y+j < size &&
+			 z+k >= 0 && z+k < size){
+		    if (get_cell_at(x+i, y+j, z+k)){
+			cnt++;
+		    }
 		}
 	    }
 	}
