@@ -9,33 +9,33 @@ OpenGL support in favor of Metal)).
 
 ## Installation
 
-'''bash
+```bash
     git clone https:github.com/noctrog/3d-cellular-automata
     cd 3d-cellular-automata/build
     cmake ..
     make -j
     make install -- would not recommend since this project is a WIP
-'''
+```
 
 ## Run 
 
 If you just installed it, from the build folder, run:
 
-'''bash
+```bash
     ../bin/3D_Cellular_Automata -f ../map.txt
-'''
+```
 
 The -f argument tells the program from which text file to load the initial map conditions. A map
 file must look like this:
 
-'''txt
+```txt
     rule: 2 3 3 3
     size: 10
     cells:
     0 2 3
     3 5 1
     5 3 1
-'''
+```
 
 * Rule:
     * First number: min of neighbour cells to survive.
