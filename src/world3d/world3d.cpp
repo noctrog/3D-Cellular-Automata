@@ -154,12 +154,12 @@ void World3d::read_from(std::ifstream& ifs)
 
 void World3d::evolve()
 {
-    std::cout << "Antes de evolve" << std::endl;
-    for (int i = 0; i < positions_buffer.size(); i++){
-	std::cout << positions_buffer[i].at(0) << " ";
-	std::cout << positions_buffer[i].at(1) << " ";
-	std::cout << positions_buffer[i].at(2) << std::endl;
-    }
+    //std::cout << "Antes de evolve" << std::endl;
+    //for (int i = 0; i < positions_buffer.size(); i++){
+	//std::cout << positions_buffer[i].at(0) << " ";
+	//std::cout << positions_buffer[i].at(1) << " ";
+	//std::cout << positions_buffer[i].at(2) << std::endl;
+    //}
 
     nbeings = 0;
     positions_buffer.clear();
@@ -189,12 +189,12 @@ void World3d::evolve()
     }
 
     world.swap(aux_world);
-    std::cout << "Despues de evolve" << std::endl;
-    for (int i = 0; i < positions_buffer.size(); i++){
-	std::cout << positions_buffer[i].at(0) << " ";
-	std::cout << positions_buffer[i].at(1) << " ";
-	std::cout << positions_buffer[i].at(2) << std::endl;
-    }
+    //std::cout << "Despues de evolve" << std::endl;
+    //for (int i = 0; i < positions_buffer.size(); i++){
+	//std::cout << positions_buffer[i].at(0) << " ";
+	//std::cout << positions_buffer[i].at(1) << " ";
+	//std::cout << positions_buffer[i].at(2) << std::endl;
+    //}
 }
 
 float* World3d::get_positions_buffer()

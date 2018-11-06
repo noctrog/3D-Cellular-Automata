@@ -4,14 +4,10 @@
 #include <glm/gtc/type_ptr.hpp> // glm::value_ptr
 //#include "stb_image.h"
 
-#include <stdexcept>
 #include <iostream>
 #include <sstream>
-#include <cmath>
+#include <stdexcept>
 
-#include <bitset>
-
-#include <stdio.h>
 static void APIENTRY simple_print_callback( GLenum source,
 					    GLenum type,
 					    GLuint id,
@@ -33,10 +29,7 @@ App::App(const std::string& _map_file_path)
     setup();
 }
 
-App::~App()
-{
-    
-}
+App::~App() = default;
 
 void  App::SDLinit()
 {
@@ -74,7 +67,7 @@ void  App::GLinit()
     glEnable(GL_LINE_SMOOTH);
 
     //glEnable(GL_MULTISAMPLE);
-    glDebugMessageCallback(&simple_print_callback, NULL);
+    glDebugMessageCallback(&simple_print_callback, nullptr);
 }
 
 void  App::setup()
@@ -88,7 +81,7 @@ void  App::setup()
 void  App::startup()
 {
     proj_matrix	      = glm::perspective(70.0f, 1200.0f/720.0f, 100.0f, 0.1f);
-    float dist	      = static_cast<float>(the_world.get_size());
+    auto dist	      = static_cast<float>(the_world.get_size());
     world_matrix      = glm::translate(glm::mat4(1.0f), glm::vec3(-dist/2.0f));
     view_distance     = dist;
     view_matrix	      = glm::lookAt(glm::vec3(view_distance * cos(cam_angle),
@@ -98,47 +91,47 @@ void  App::startup()
 				    glm::vec3(0.0f, 0.0f, 1.0f));
 
     static const GLfloat    cube_vertices[] = {
-	-0.5f, -0.5f, -0.5f,
-	 0.5f, -0.5f, -0.5f,
-	 0.5f,  0.5f, -0.5f,
-	 0.5f,  0.5f, -0.5f,
-	-0.5f,  0.5f, -0.5f,
-	-0.5f, -0.5f, -0.5f,
+	-0.4f, -0.4f, -0.4f,
+	 0.4f, -0.4f, -0.4f,
+	 0.4f,  0.4f, -0.4f,
+	 0.4f,  0.4f, -0.4f,
+	-0.4f,  0.4f, -0.4f,
+	-0.4f, -0.4f, -0.4f,
 
-	-0.5f, -0.5f,  0.5f,
-	 0.5f, -0.5f,  0.5f,
-	 0.5f,  0.5f,  0.5f,
-	 0.5f,  0.5f,  0.5f,
-	-0.5f,  0.5f,  0.5f,
-	-0.5f, -0.5f,  0.5f,
+	-0.4f, -0.4f,  0.4f,
+	 0.4f, -0.4f,  0.4f,
+	 0.4f,  0.4f,  0.4f,
+	 0.4f,  0.4f,  0.4f,
+	-0.4f,  0.4f,  0.4f,
+	-0.4f, -0.4f,  0.4f,
 
-	-0.5f,  0.5f,  0.5f,
-	-0.5f,  0.5f, -0.5f,
-	-0.5f, -0.5f, -0.5f,
-	-0.5f, -0.5f, -0.5f,
-	-0.5f, -0.5f,  0.5f,
-	-0.5f,  0.5f,  0.5f,
+	-0.4f,  0.4f,  0.4f,
+	-0.4f,  0.4f, -0.4f,
+	-0.4f, -0.4f, -0.4f,
+	-0.4f, -0.4f, -0.4f,
+	-0.4f, -0.4f,  0.4f,
+	-0.4f,  0.4f,  0.4f,
 
-	 0.5f,  0.5f,  0.5f,
-	 0.5f,  0.5f, -0.5f,
-	 0.5f, -0.5f, -0.5f,
-	 0.5f, -0.5f, -0.5f,
-	 0.5f, -0.5f,  0.5f,
-	 0.5f,  0.5f,  0.5f,
+	 0.4f,  0.4f,  0.4f,
+	 0.4f,  0.4f, -0.4f,
+	 0.4f, -0.4f, -0.4f,
+	 0.4f, -0.4f, -0.4f,
+	 0.4f, -0.4f,  0.4f,
+	 0.4f,  0.4f,  0.4f,
 
-	-0.5f, -0.5f, -0.5f,
-	 0.5f, -0.5f, -0.5f,
-	 0.5f, -0.5f,  0.5f,
-	 0.5f, -0.5f,  0.5f,
-	-0.5f, -0.5f,  0.5f,
-	-0.5f, -0.5f, -0.5f,
+	-0.4f, -0.4f, -0.4f,
+	 0.4f, -0.4f, -0.4f,
+	 0.4f, -0.4f,  0.4f,
+	 0.4f, -0.4f,  0.4f,
+	-0.4f, -0.4f,  0.4f,
+	-0.4f, -0.4f, -0.4f,
 
-	-0.5f,  0.5f, -0.5f,
-	 0.5f,  0.5f, -0.5f,
-	 0.5f,  0.5f,  0.5f,
-	 0.5f,  0.5f,  0.5f,
-	-0.5f,  0.5f,  0.5f,
-	-0.5f,  0.5f, -0.5f
+	-0.4f,  0.4f, -0.4f,
+	 0.4f,  0.4f, -0.4f,
+	 0.4f,  0.4f,  0.4f,
+	 0.4f,  0.4f,  0.4f,
+	-0.4f,  0.4f,  0.4f,
+	-0.4f,  0.4f, -0.4f
     };
 
         // Create vertex array object for rendering the cubes 
@@ -161,11 +154,11 @@ void  App::startup()
 		 sizeof(cube_vertices), 
 		 cube_vertices,
 		 GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, positions_buffer);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(1);
     glVertexAttribDivisor(1, 1);
 
@@ -178,7 +171,7 @@ void  App::startup()
 
 void  App::render()
 {
-    float background_color[] = { 0.5f + 0.1f*sin(currentTime), 0.0f, 0.5f, 1.0f }; 
+    float background_color[] = { 0.1f, 0.0f, 0.1f + 0.1f*sin(currentTime), 1.0f }; 
     glClearBufferfv(GL_COLOR, 0, background_color);
     static const float zero = 0.0f;
     glClearBufferfv(GL_DEPTH, 0, &zero);
@@ -196,8 +189,10 @@ void  App::render()
 
     glm::mat4 mvp_matrix = proj_matrix * view_matrix * world_matrix;
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+    
+    glUniform1f(1, static_cast<float>(the_world.get_size()));
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, the_world.num_beings());
 }
 

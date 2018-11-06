@@ -1,5 +1,5 @@
 rule: 2 3 3 3
-size: 4
+size: 20
 cells:
 1 2 1
 2 2 1
