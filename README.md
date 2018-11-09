@@ -19,7 +19,7 @@ OpenGL support in favor of Metal)).
 
 ## Run 
 
-If you just installed it, from the build folder, run:
+If you just compiled, from the build folder, run:
 
 ```bash
     ../bin/3D_Cellular_Automata -f ../map.txt
