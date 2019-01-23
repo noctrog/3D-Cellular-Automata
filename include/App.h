@@ -58,12 +58,12 @@ private:
     sdl2::GLContextPtr	      glcontext;
 
     /// Saves the current value of time, in seconds
-    float currentTime;
+    uint32_t last_epoch_time;
 
     /* ---   User input   --- */
     bool		      b_run_single_epoch;
     bool		      b_auto_epoch;
-    float		      auto_epoch_rate;
+    uint32_t		      auto_epoch_rate;
 
     /* --- World --- */
     World3d the_world;

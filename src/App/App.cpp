@@ -23,7 +23,7 @@ static void APIENTRY simple_print_callback( GLenum source,
 }
 
 App::App(const std::string& _map_file_path) 
-    : the_world(_map_file_path), b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(1.0f), cam_angle(0)
+    : the_world(_map_file_path), b_run_single_epoch(false), b_auto_epoch(false), auto_epoch_rate(100), cam_angle(0)
 {
     // Setup SDL2 and OpenGL
     setup();
@@ -171,6 +171,7 @@ void  App::startup()
 
 void  App::render()
 {
+    float currentTime = static_cast<float>(SDL_GetTicks())/1000.0f;
     float background_color[] = { 0.1f, 0.0f, 0.1f + 0.1f*sin(currentTime), 1.0f }; 
     glClearBufferfv(GL_COLOR, 0, background_color);
     static const float zero = 0.0f;
@@ -202,6 +203,8 @@ void  App::run()
 
     bool running = true;
     SDL_Event e;
+    last_epoch_time = SDL_GetTicks();
+
     while (running)
     {
 	while(SDL_PollEvent(&e))
@@ -210,8 +213,10 @@ void  App::run()
 	    {
 		case SDL_KEYDOWN:
 		    if (e.key.keysym.sym == SDLK_ESCAPE)  running = false;
-		    if (e.key.keysym.sym == SDLK_p)	  b_auto_epoch != b_auto_epoch;
+		    if (e.key.keysym.sym == SDLK_p)	  b_auto_epoch = !b_auto_epoch;
 		    if (e.key.keysym.sym == SDLK_SPACE)	  b_run_single_epoch = true;
+		    if (e.key.keysym.sym == SDLK_KP_PLUS)	  auto_epoch_rate -= (auto_epoch_rate - 100 > 1000) ? 0 : 100;
+		    if (e.key.keysym.sym == SDLK_MINUS)	  auto_epoch_rate += (auto_epoch_rate + 100 > 1000) ? 0 : 100;
 
 		    if (e.key.keysym.sym == SDLK_a)	  cam_angle -= 0.1f;
 		    if (e.key.keysym.sym == SDLK_d)	  cam_angle += 0.1f;
@@ -221,12 +226,10 @@ void  App::run()
 	    }
 	}
 
-	currentTime = static_cast<float>(SDL_GetTicks())/1000.0f;
-
-	//Compute shader
 	// TODO: auto epoch time delay
-	if (b_auto_epoch || b_run_single_epoch)
+	if ((b_auto_epoch && (SDL_GetTicks() - last_epoch_time > auto_epoch_rate)) || b_run_single_epoch)
 	{
+	    last_epoch_time = SDL_GetTicks();
 	    the_world.evolve();
 	    b_run_single_epoch = false;
 	}
