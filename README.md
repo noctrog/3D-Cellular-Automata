@@ -7,14 +7,13 @@ OpenGL support in favor of Metal)).
 
 ![pic](img/presentation.png)
 
-## Installation
+## Compilation
 
 ```bash
     git clone https:github.com/noctrog/3d-cellular-automata
     cd 3d-cellular-automata/build
     cmake ..
     make -j
-    make install -- would not recommend since this project is a WIP
 ```
 
 ## Run 
